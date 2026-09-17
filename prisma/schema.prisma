@@ -7,10 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─────────────────────────────────────────────────────────────
-// 2. Authentication & Account System
-// ─────────────────────────────────────────────────────────────
-
 enum StaffRole {
   SUPER_ADMIN
   LEADER
@@ -90,7 +86,6 @@ model JoinRequest {
   createdAt   DateTime      @default(now())
 }
 
-// Refresh tokens for session management (short-lived access token + rotating refresh token)
 model RefreshToken {
   id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -103,8 +98,6 @@ model RefreshToken {
   @@index([userId])
 }
 
-// Per-module permission overrides beyond the base role (kept optional —
-// role alone drives most access; this covers one-off exceptions)
 model PermissionOverride {
   id       String   @id @default(cuid())
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -115,10 +108,6 @@ model PermissionOverride {
 
   @@unique([userId, module])
 }
-
-// ─────────────────────────────────────────────────────────────
-// 3. Attendance & Leave Management
-// ─────────────────────────────────────────────────────────────
 
 enum PunchStatus {
   ON_TIME
@@ -190,10 +179,6 @@ model LeaveRequest {
 
   @@index([userId, status])
 }
-
-// ─────────────────────────────────────────────────────────────
-// 4. Task & Production Management
-// ─────────────────────────────────────────────────────────────
 
 enum TaskStatus {
   PLANNED
@@ -298,10 +283,6 @@ model GearItem {
   packed   Boolean @default(false)
 }
 
-// ─────────────────────────────────────────────────────────────
-// 5. Client Management
-// ─────────────────────────────────────────────────────────────
-
 model Client {
   id               String    @id @default(cuid())
   name             String    // brand name
@@ -336,10 +317,6 @@ model ShareLink {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
 }
-
-// ─────────────────────────────────────────────────────────────
-// 6. Content Calendar  +  6. Client Portal (approvals)
-// ─────────────────────────────────────────────────────────────
 
 enum PostApprovalStatus {
   DRAFT
@@ -397,10 +374,6 @@ model ClientRequest {
   @@index([clientId, status])
 }
 
-// ─────────────────────────────────────────────────────────────
-// 7. Leads Pipeline
-// ─────────────────────────────────────────────────────────────
-
 enum LeadStage {
   NEW
   CONTACTED
@@ -428,10 +401,6 @@ model Lead {
   @@index([assignedToId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// 8. Finance
-// ─────────────────────────────────────────────────────────────
-
 enum FinanceType {
   INCOME
   EXPENSE
@@ -457,10 +426,6 @@ model FinanceEntry {
   @@index([clientId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// 10. Notifications
-// ─────────────────────────────────────────────────────────────
-
 model Notification {
   id            String   @id @default(cuid())
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -474,10 +439,6 @@ model Notification {
 
   @@index([userId, read])
 }
-
-// ─────────────────────────────────────────────────────────────
-// Non-functional: Audit Log
-// ─────────────────────────────────────────────────────────────
 
 model AuditLog {
   id           String   @id @default(cuid())

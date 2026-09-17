@@ -1,12 +1,10 @@
+import 'dotenv/config'
 import express from 'express'
 import cookie from 'cookie-parser'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import morgan from 'morgan'
 import apiRoutes from './routes'
-import type { ApiResponse } from './utils/response.js'
-
-dotenv.config()
+import type { ApiResponse } from './utils/response'
 
 const app = express();
 

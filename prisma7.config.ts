@@ -8,5 +8,7 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
-  earlyAccess: true,
+  datasource: {
+    url: process.env.DATABASE_URL!,
+  },
 });
