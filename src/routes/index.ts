@@ -1,8 +1,8 @@
 import { Router } from 'express'
-import exampleRoutes from './example.route'
+import exampleRoutes from './health.route'
 
 const router = Router()
 
-router.use('/example', exampleRoutes)
+router.use('/health', exampleRoutes)
 
 export default router
