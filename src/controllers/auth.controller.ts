@@ -2,12 +2,11 @@ import type { Request, Response, NextFunction } from 'express'
 
 import { AUTH_COOKIE_OPTIONS } from '../auth/auth.config'
 import {
-  getCurrentUserFromToken,
   getRefreshTokenCookieName,
   loginUser,
   logoutUser,
   registerUser
-} from '../services/auth.services'
+} from '../services/auth.service'
 import { sendResponse } from '../utils/response'
 
 export async function register(req: Request, res: Response, next: NextFunction) {

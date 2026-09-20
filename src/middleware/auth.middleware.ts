@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 
-import { getCurrentUserFromToken, getRefreshTokenCookieName } from '../services/auth.services'
+import { getCurrentUserFromToken, getRefreshTokenCookieName } from '../services/auth.service'
 import { sendResponse } from '../utils/response'
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {

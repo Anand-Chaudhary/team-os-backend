@@ -1,23 +1,25 @@
 import type { Request, Response, NextFunction } from 'express';
-import bcrypt from 'bcrypt';
-import { prisma } from '../db/prisma';
 import { sendResponse } from '../utils/response';
+import {
+  listEmployees as serviceListEmployees,
+  getEmployeeById,
+  createEmployee as serviceCreateEmployee,
+  updateEmployee as serviceUpdateEmployee,
+  deleteEmployee as serviceDeleteEmployee,
+} from '../services/team.service';
 
 /**
  * Helper to remove sensitive fields from a user record before returning it.
  */
 function sanitizeUser(user: any) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { passwordHash, ...safe } = user;
   return safe;
 }
 
-/**
- * GET /team – list all employees (users).
- */
+/** GET /team – list all employees (users). */
 export async function listEmployees(req: Request, res: Response, next: NextFunction) {
   try {
-    const employees = await prisma.user.findMany();
+    const employees = await serviceListEmployees();
     const safe = employees.map(sanitizeUser);
     return sendResponse(res, {
       success: true,
@@ -30,13 +32,11 @@ export async function listEmployees(req: Request, res: Response, next: NextFunct
   }
 }
 
-/**
- * GET /team/:id – fetch a single employee.
- */
+/** GET /team/:id – fetch a single employee. */
 export async function getEmployee(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id } = req.params;
-    const employee = await prisma.user.findUnique({ where: { id } });
+    const id = req.params.id as string;
+    const employee = await getEmployeeById(id);
     if (!employee) {
       const err: any = new Error('Employee not found');
       err.status = 404;
@@ -53,10 +53,7 @@ export async function getEmployee(req: Request, res: Response, next: NextFunctio
   }
 }
 
-/**
- * POST /team – create a new employee.
- * Expected body: { name, email, password, phone?, role?, jobType?, reportTime?, gracePeriodMins? }
- */
+/** POST /team – create a new employee. */
 export async function createEmployee(req: Request, res: Response, next: NextFunction) {
   try {
     const {
@@ -76,20 +73,15 @@ export async function createEmployee(req: Request, res: Response, next: NextFunc
       throw err;
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    const employee = await prisma.user.create({
-      data: {
-        name,
-        email,
-        phone: phone ?? null,
-        passwordHash,
-        role: role ?? 'SALES',
-        status: 'ACTIVE',
-        jobType: jobType ?? null,
-        reportTime: reportTime ?? null,
-        gracePeriodMins: gracePeriodMins ?? undefined,
-      },
+    const employee = await serviceCreateEmployee({
+      name,
+      email,
+      password,
+      phone,
+      role,
+      jobType,
+      reportTime,
+      gracePeriodMins,
     });
 
     return sendResponse(res, {
@@ -103,13 +95,10 @@ export async function createEmployee(req: Request, res: Response, next: NextFunc
   }
 }
 
-/**
- * PATCH /team/:id – update an existing employee.
- * Allows partial updates of any editable fields.
- */
+/** PATCH /team/:id – update an existing employee. */
 export async function updateEmployee(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const {
       name,
       email,
@@ -121,19 +110,18 @@ export async function updateEmployee(req: Request, res: Response, next: NextFunc
       gracePeriodMins,
     } = req.body ?? {};
 
-    const employee = await prisma.user.update({
-      where: { id },
-      data: {
-        ...(name && { name }),
-        ...(email && { email }),
-        ...(phone !== undefined && { phone: phone ?? null }),
-        ...(role && { role }),
-        ...(status && { status }),
-        ...(jobType !== undefined && { jobType: jobType ?? null }),
-        ...(reportTime !== undefined && { reportTime: reportTime ?? null }),
-        ...(gracePeriodMins !== undefined && { gracePeriodMins }),
-      },
-    });
+    const updateData: any = {
+      ...(name && { name }),
+      ...(email && { email }),
+      ...(phone !== undefined && { phone: phone ?? null }),
+      ...(role && { role }),
+      ...(status && { status }),
+      ...(jobType !== undefined && { jobType: jobType ?? null }),
+      ...(reportTime !== undefined && { reportTime: reportTime ?? null }),
+      ...(gracePeriodMins !== undefined && { gracePeriodMins }),
+    };
+
+    const employee = await serviceUpdateEmployee(id, updateData);
 
     return sendResponse(res, {
       success: true,
@@ -146,13 +134,11 @@ export async function updateEmployee(req: Request, res: Response, next: NextFunc
   }
 }
 
-/**
- * DELETE /team/:id – remove an employee.
- */
+/** DELETE /team/:id – remove an employee. */
 export async function deleteEmployee(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id } = req.params;
-    await prisma.user.delete({ where: { id } });
+    const id = req.params.id as string;
+    await serviceDeleteEmployee(id);
     return sendResponse(res, {
       success: true,
       message: 'Employee deleted successfully',

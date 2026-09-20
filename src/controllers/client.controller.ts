@@ -1,13 +1,18 @@
 import type { Request, Response, NextFunction } from 'express';
-import { prisma } from '../db/prisma';
 import { sendResponse } from '../utils/response';
+import {
+  listClients as serviceListClients,
+  getClientById,
+  createClient as serviceCreateClient,
+  updateClient as serviceUpdateClient,
+  deleteClient as serviceDeleteClient,
+  generateShareLink as serviceGenerateShareLink,
+} from '../services/client.service';
 
-/**
- * GET /clients – list all client records.
- */
+/** GET /clients – list all client records. */
 export async function listClients(req: Request, res: Response, next: NextFunction) {
   try {
-    const clients = await prisma.client.findMany();
+    const clients = await serviceListClients();
     return sendResponse(res, {
       success: true,
       message: 'Clients fetched successfully',
@@ -19,13 +24,11 @@ export async function listClients(req: Request, res: Response, next: NextFunctio
   }
 }
 
-/**
- * GET /clients/:id – fetch a single client.
- */
+/** GET /clients/:id – fetch a single client. */
 export async function getClient(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id } = req.params;
-    const client = await prisma.client.findUnique({ where: { id } });
+    const id = req.params.id as string;
+    const client = await getClientById(id);
     if (!client) {
       const err: any = new Error('Client not found');
       err.status = 404;
@@ -42,10 +45,7 @@ export async function getClient(req: Request, res: Response, next: NextFunction)
   }
 }
 
-/**
- * POST /clients – create a new client.
- * Expected body: { name, contactEmail?, contactPhone?, whatsappGroupUrl?, contentTags?, monthlyGoal? }
- */
+/** POST /clients – create a new client. */
 export async function createClient(req: Request, res: Response, next: NextFunction) {
   try {
     const {
@@ -63,15 +63,13 @@ export async function createClient(req: Request, res: Response, next: NextFuncti
       throw err;
     }
 
-    const client = await prisma.client.create({
-      data: {
-        name,
-        contactEmail: contactEmail ?? null,
-        contactPhone: contactPhone ?? null,
-        whatsappGroupUrl: whatsappGroupUrl ?? null,
-        contentTags: contentTags ?? [],
-        monthlyGoal: monthlyGoal ?? null,
-      },
+    const client = await serviceCreateClient({
+      name,
+      contactEmail,
+      contactPhone,
+      whatsappGroupUrl,
+      contentTags,
+      monthlyGoal,
     });
 
     return sendResponse(res, {
@@ -85,13 +83,10 @@ export async function createClient(req: Request, res: Response, next: NextFuncti
   }
 }
 
-/**
- * PATCH /clients/:id – update an existing client.
- * Allows partial updates.
- */
+/** PATCH /clients/:id – update an existing client. */
 export async function updateClient(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const {
       name,
       contactEmail,
@@ -101,17 +96,16 @@ export async function updateClient(req: Request, res: Response, next: NextFuncti
       monthlyGoal,
     } = req.body ?? {};
 
-    const client = await prisma.client.update({
-      where: { id },
-      data: {
-        ...(name && { name }),
-        ...(contactEmail !== undefined && { contactEmail: contactEmail ?? null }),
-        ...(contactPhone !== undefined && { contactPhone: contactPhone ?? null }),
-        ...(whatsappGroupUrl !== undefined && { whatsappGroupUrl: whatsappGroupUrl ?? null }),
-        ...(contentTags !== undefined && { contentTags: contentTags ?? [] }),
-        ...(monthlyGoal !== undefined && { monthlyGoal: monthlyGoal ?? null }),
-      },
-    });
+    const updateData: any = {
+      ...(name && { name }),
+      ...(contactEmail !== undefined && { contactEmail: contactEmail ?? null }),
+      ...(contactPhone !== undefined && { contactPhone: contactPhone ?? null }),
+      ...(whatsappGroupUrl !== undefined && { whatsappGroupUrl: whatsappGroupUrl ?? null }),
+      ...(contentTags !== undefined && { contentTags: contentTags ?? [] }),
+      ...(monthlyGoal !== undefined && { monthlyGoal: monthlyGoal ?? null }),
+    };
+
+    const client = await serviceUpdateClient(id, updateData);
 
     return sendResponse(res, {
       success: true,
@@ -124,13 +118,11 @@ export async function updateClient(req: Request, res: Response, next: NextFuncti
   }
 }
 
-/**
- * DELETE /clients/:id – delete a client.
- */
+/** DELETE /clients/:id – delete a client. */
 export async function deleteClient(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id } = req.params;
-    await prisma.client.delete({ where: { id } });
+    const id = req.params.id as string;
+    await serviceDeleteClient(id);
     return sendResponse(res, {
       success: true,
       message: 'Client deleted successfully',
@@ -142,32 +134,16 @@ export async function deleteClient(req: Request, res: Response, next: NextFuncti
   }
 }
 
-/**
- * POST /clients/:id/share – generate a tokenized read‑only calendar link for a client.
- */
+/** POST /clients/:id/share – generate a tokenized read‑only calendar link for a client. */
 export async function generateShareLink(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id } = req.params;
-    // Ensure client exists
-    const client = await prisma.client.findUnique({ where: { id } });
-    if (!client) {
-      const err: any = new Error('Client not found');
-      err.status = 404;
-      throw err;
-    }
-
-    // Create (or replace) a ShareLink for the client
-    const shareLink = await prisma.shareLink.upsert({
-      where: { clientId: id },
-      update: {}, // keep existing token; can add logic to rotate if needed
-      create: { clientId: id },
-    });
-
+    const id = req.params.id as string;
+    const result = await serviceGenerateShareLink(id);
     return sendResponse(res, {
       success: true,
       message: 'Share link generated',
       status: 201,
-      data: { url: `/clients/${id}/calendar?token=${shareLink.token}` },
+      data: result,
     });
   } catch (error) {
     next(error);
