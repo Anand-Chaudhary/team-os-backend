@@ -15,7 +15,7 @@ app.use(morgan('dev'))
 
 app.use(cors({
     origin: (origin, callback) => {
-        const allowedOrigins = [process.env.DEVELOPMENT_URL];
+        const allowedOrigins = [process.env.DEVELOPMENT_URL, process.env.PRODUCTION_URL];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
