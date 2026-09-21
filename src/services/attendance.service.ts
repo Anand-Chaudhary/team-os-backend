@@ -52,7 +52,7 @@ export async function punchIn(data: {
   const distanceM = haversineDistance(latitude, longitude, office.latitude, office.longitude);
   const now = new Date();
 
-  let status = 'ON_TIME' as const;
+  let status: 'ON_TIME' | 'FLAGGED' | 'LATE' = 'ON_TIME';
   if (distanceM > office.radiusM) status = 'FLAGGED';
   if (computeLateStatus(user.reportTime ?? null, user.gracePeriodMins ?? null, now)) {
     status = status === 'FLAGGED' ? 'FLAGGED' : 'LATE';

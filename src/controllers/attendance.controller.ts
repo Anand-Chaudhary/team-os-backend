@@ -30,7 +30,16 @@ export async function punchInHandler(req: Request, res: Response, next: NextFunc
       err.status = 400;
       throw err;
     }
-    const punch = await punchIn({ userId, officeId, latitude, longitude });
+    // Cast to expected types to satisfy TypeScript
+    const officeIdStr = officeId as string;
+    const latitudeNum = Number(latitude);
+    const longitudeNum = Number(longitude);
+    if (Number.isNaN(latitudeNum) || Number.isNaN(longitudeNum)) {
+      const err: any = new Error('latitude and longitude must be numbers');
+      err.status = 400;
+      throw err;
+    }
+    const punch = await punchIn({ userId, officeId: officeIdStr, latitude: latitudeNum, longitude: longitudeNum });
     return sendResponse(res, { success: true, message: 'Punch recorded', status: 201, data: punch });
   } catch (error) {
     next(error);
@@ -41,7 +50,8 @@ export async function punchInHandler(req: Request, res: Response, next: NextFunc
 export async function punchOutHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
-    const punch = await punchOut(id);
+    const punchId = id as string;
+    const punch = await punchOut(punchId);
     return sendResponse(res, { success: true, message: 'Punch out recorded', status: 200, data: punch });
   } catch (error) {
     next(error);
@@ -52,7 +62,8 @@ export async function punchOutHandler(req: Request, res: Response, next: NextFun
 export async function startLunchHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
-    const lunch = await startLunchBreak(id);
+    const lunchId = id as string;
+    const lunch = await startLunchBreak(lunchId);
     return sendResponse(res, { success: true, message: 'Lunch break started', status: 201, data: lunch });
   } catch (error) {
     next(error);
@@ -63,7 +74,8 @@ export async function startLunchHandler(req: Request, res: Response, next: NextF
 export async function endLunchHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
-    const lunch = await endLunchBreak(id);
+    const lunchId = id as string;
+    const lunch = await endLunchBreak(lunchId);
     return sendResponse(res, { success: true, message: 'Lunch break ended', status: 200, data: lunch });
   } catch (error) {
     next(error);
@@ -84,13 +96,14 @@ export async function flaggedPunchesHandler(req: Request, res: Response, next: N
 export async function approvePunchHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
+    const punchId = id as string;
     const managerId = (req.user as any)?.id;
     if (!managerId) {
       const err: any = new Error('Manager authentication required');
       err.status = 401;
       throw err;
     }
-    const punch = await approvePunch(id, managerId);
+    const punch = await approvePunch(punchId, managerId);
     return sendResponse(res, { success: true, message: 'Punch approved', status: 200, data: punch });
   } catch (error) {
     next(error);
@@ -101,13 +114,14 @@ export async function approvePunchHandler(req: Request, res: Response, next: Nex
 export async function rejectPunchHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
+    const punchId = id as string;
     const managerId = (req.user as any)?.id;
     if (!managerId) {
       const err: any = new Error('Manager authentication required');
       err.status = 401;
       throw err;
     }
-    const punch = await rejectPunch(id, managerId);
+    const punch = await rejectPunch(punchId, managerId);
     return sendResponse(res, { success: true, message: 'Punch rejected', status: 200, data: punch });
   } catch (error) {
     next(error);
@@ -118,7 +132,10 @@ export async function rejectPunchHandler(req: Request, res: Response, next: Next
 export async function attendanceStatsHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { userId, year, month } = req.params;
-    const stats = await getMonthlyAttendance(userId, parseInt(year, 10), parseInt(month, 10));
+    const userIdStr = userId as string;
+    const yearStr = year as string;
+    const monthStr = month as string;
+    const stats = await getMonthlyAttendance(userIdStr, parseInt(yearStr, 10), parseInt(monthStr, 10));
     return sendResponse(res, { success: true, message: 'Attendance stats', status: 200, data: stats });
   } catch (error) {
     next(error);
@@ -156,13 +173,14 @@ export async function leaveRequestHandler(req: Request, res: Response, next: Nex
 export async function approveLeaveHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
+    const leaveId = id as string;
     const managerId = (req.user as any)?.id;
     if (!managerId) {
       const err: any = new Error('Manager authentication required');
       err.status = 401;
       throw err;
     }
-    const request = await approveLeave(id, managerId);
+    const request = await approveLeave(leaveId, managerId);
     return sendResponse(res, { success: true, message: 'Leave approved', status: 200, data: request });
   } catch (error) {
     next(error);
@@ -173,13 +191,14 @@ export async function approveLeaveHandler(req: Request, res: Response, next: Nex
 export async function rejectLeaveHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
+    const leaveId = id as string;
     const managerId = (req.user as any)?.id;
     if (!managerId) {
       const err: any = new Error('Manager authentication required');
       err.status = 401;
       throw err;
     }
-    const request = await rejectLeave(id, managerId);
+    const request = await rejectLeave(leaveId, managerId);
     return sendResponse(res, { success: true, message: 'Leave rejected', status: 200, data: request });
   } catch (error) {
     next(error);
@@ -190,7 +209,8 @@ export async function rejectLeaveHandler(req: Request, res: Response, next: Next
 export async function leaveBalanceHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { userId } = req.params;
-    const balance = await getLeaveBalance(userId);
+    const userIdStr = userId as string;
+    const balance = await getLeaveBalance(userIdStr);
     return sendResponse(res, { success: true, message: 'Leave balance', status: 200, data: balance });
   } catch (error) {
     next(error);
