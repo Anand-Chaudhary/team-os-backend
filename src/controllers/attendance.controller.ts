@@ -18,9 +18,15 @@ import {
 /** POST /attendance/punch – employee punch‑in */
 export async function punchInHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const { userId, officeId, latitude, longitude } = req.body ?? {};
-    if (!userId || !officeId || latitude === undefined || longitude === undefined) {
-      const err: any = new Error('userId, officeId, latitude, longitude are required');
+    const { officeId, latitude, longitude } = req.body ?? {};
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      const err: any = new Error('Authentication required');
+      err.status = 401;
+      throw err;
+    }
+    if (!officeId || latitude === undefined || longitude === undefined) {
+      const err: any = new Error('officeId, latitude, longitude are required');
       err.status = 400;
       throw err;
     }
@@ -122,9 +128,15 @@ export async function attendanceStatsHandler(req: Request, res: Response, next: 
 /** POST /attendance/leave-request */
 export async function leaveRequestHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const { userId, startDate, endDate, reason } = req.body ?? {};
-    if (!userId || !startDate || !endDate || !reason) {
-      const err: any = new Error('userId, startDate, endDate, reason required');
+    const { startDate, endDate, reason } = req.body ?? {};
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      const err: any = new Error('Authentication required');
+      err.status = 401;
+      throw err;
+    }
+    if (!startDate || !endDate || !reason) {
+      const err: any = new Error('startDate, endDate, reason are required');
       err.status = 400;
       throw err;
     }
