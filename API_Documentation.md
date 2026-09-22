@@ -98,16 +98,113 @@
 
 ---
 
-## 5. Attendance & Leave
+## 5. Tasks
+
+> Base path: **`/tasks`** – all routes require authentication.
+
+| Method | Endpoint | Request Body | Description | Success `data` |
+|--------|----------|--------------|-------------|----------------|
+| **GET** | `/tasks` | – | List all tasks. | `Array<Task>` |
+| **GET** | `/tasks/:id` | – | Get a single task by `id`. | `<Task>` |
+| **POST** | `/tasks` | `{ "title":"…", "description?":"…", "clientId?":"…", "deadline?":"YYYY-MM-DD" or ISO string, "priority?":"LOW|MEDIUM|HIGH|URGENT" }` | Create a new task. | `<Task>` |
+| **PATCH** | `/tasks/:id` | Any subset of `title`, `description`, `status`, `priority`, `deadline`, `clientId`. | Update task data. | `<Task>` |
+| **DELETE** | `/tasks/:id` | – | Delete a task. | `null` |
+| **POST** | `/tasks/:id/assignees` | `{ "assigneeIds":["user-id-1","user-id-2"] }` | Assign one or more users to a task. | `<Task>` |
+| **POST** | `/tasks/:id/revisions` | `{ "note":"…", "attachmentUrl?":"https://…" }` | Add a revision note to a task. | `<TaskRevision>` |
+
+### Payload snippets (summary)
+
+**Task**
+```json
+{
+  "id": "string",
+  "title": "string",
+  "description": "string|null",
+  "status": "TODO|IN_PROGRESS|BLOCKED|DONE",
+  "priority": "LOW|MEDIUM|HIGH|URGENT",
+  "deadline": "ISO-date-time|null",
+  "clientId": "string|null",
+  "createdById": "string",
+  "client": { "id": "…", "name": "…" }|null,
+  "assignees": [{ "id": "…", "user": { "id": "…", "name": "…" } }],
+  "revisions": [{ "id": "…", "note": "…", "roundNumber": 1 }],
+  "createdAt": "ISO-date-time"
+}
+```
+
+**TaskRevision**
+```json
+{
+  "id": "string",
+  "taskId": "string",
+  "submittedById": "string",
+  "roundNumber": 1,
+  "note": "string",
+  "attachmentUrl": "string|null",
+  "createdAt": "ISO-date-time"
+}
+```
+
+---
+
+## 6. Shoots
+
+> Base path: **`/shoots`** – all routes require authentication.
+
+| Method | Endpoint | Request Body | Description | Success `data` |
+|--------|----------|--------------|-------------|----------------|
+| **GET** | `/shoots` | – | List all shoots. | `Array<Shoot>` |
+| **GET** | `/shoots/:id` | – | Get a single shoot by `id`. | `<Shoot>` |
+| **POST** | `/shoots` | `{ "clientId?":"…", "title":"…", "scheduledAt":"YYYY-MM-DDTHH:mm:ss.sssZ", "location?":"…", "cost?": 2500 }` | Create a new shoot. | `<Shoot>` |
+| **PATCH** | `/shoots/:id` | Any subset of `title`, `scheduledAt`, `location`, `cost`, `clientId`. | Update shoot data. | `<Shoot>` |
+| **DELETE** | `/shoots/:id` | – | Delete a shoot. | `null` |
+| **POST** | `/shoots/:id/crew` | `{ "crew":[{"userId":"…","role?":"Camera"}] }` | Assign crew members to the shoot. | `<Shoot>` |
+| **POST** | `/shoots/:id/gear` | `{ "name":"Tripod", "packed?": false }` | Add a gear item to the shoot checklist. | `<GearItem>` |
+
+### Payload snippets (summary)
+
+**Shoot**
+```json
+{
+  "id": "string",
+  "clientId": "string|null",
+  "title": "string",
+  "scheduledAt": "ISO-date-time",
+  "location": "string|null",
+  "cost": 2500,
+  "client": { "id": "…", "name": "…" }|null,
+  "crew": [{ "id": "…", "userId": "…", "role": "string|null", "user": { "id": "…", "name": "…" } }],
+  "gearChecklist": [{ "id": "…", "name": "Tripod", "packed": false }],
+  "createdAt": "ISO-date-time"
+}
+```
+
+**GearItem**
+```json
+{
+  "id": "string",
+  "shootId": "string",
+  "name": "string",
+  "packed": false,
+  "createdAt": "ISO-date-time"
+}
+```
+
+---
+
+## 7. Attendance & Leave
 
 > Base path: **`/attendance`** – all routes require authentication.
 
 | Method | Endpoint | Request Body | Description | Success `data` |
 |--------|----------|--------------|-------------|----------------|
 | **POST** | `/attendance/punch` | `{ "officeId":"…", "latitude": number, "longitude": number }` | Record a punch‑in. | `<Punch>` |
-| **PATCH** | `/attendance/punch/:id/out` | – | Record punch‑out for the given punch `id`. | `<Punch>` |
+| **POST** | `/attendance/punch/out` | – | Find the logged‑in user’s active punch and record the punch‑out. | `<Punch>` |
+| **PATCH** | `/attendance/punch/out` | – | Same as above; kept for compatibility with client apps. | `<Punch>` |
+| **PATCH** | `/attendance/punch/:id/out` | – | Legacy route: record punch‑out for a specific punch `id`. | `<Punch>` |
 | **POST** | `/attendance/punch/:id/lunch-start` | – | Start a lunch break for a punch. | `<LunchBreak>` |
 | **PATCH** | `/attendance/lunch/:id/end` | – | End a lunch break. | `<LunchBreak>` |
+| **GET** | `/attendance/today` | – | Fetch the logged‑in user’s attendance status for today. | `{ "punched_in": boolean, "punch_in_time": "ISO‑date-time|null", "punch_out_time": "ISO‑date-time|null" }` |
 | **GET** | `/attendance/flagged` | – | List punches flagged for manager review. | `Array<Punch>` |
 | **PATCH** | `/attendance/flagged/:id/approve` | – | Approve a flagged punch. | `<Punch>` |
 | **PATCH** | `/attendance/flagged/:id/reject` | – | Reject a flagged punch. | `<Punch>` |
@@ -158,7 +255,7 @@
 
 ---
 
-## 6. Ping / Demo Route
+## 8. Ping / Demo Route
 
 | Method | Endpoint | Description | Success `data` |
 |--------|----------|-------------|----------------|

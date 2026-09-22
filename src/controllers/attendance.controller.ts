@@ -14,6 +14,8 @@ import {
   approveLeave,
   rejectLeave,
   getLeaveBalance,
+  getTodayAttendance,
+  punchOutForUser,
 } from '../services/attendance.service';
 
 /** POST /attendance/punch – employee punch‑in */
@@ -47,12 +49,16 @@ export async function punchInHandler(req: Request, res: Response, next: NextFunc
   }
 }
 
-/** PATCH /attendance/punch/:id/out – punch‑out */
+/** PATCH /attendance/punch/out – punch‑out using the logged-in user's active punch */
 export async function punchOutHandler(req: Request, res: Response, next: NextFunction) {
   try {
+    const userId = (req.user as any)?.id;
     const { id } = req.params;
-    const punchId = id as string;
-    const punch = await punchOut(punchId);
+
+    const punch = userId
+      ? await punchOutForUser(userId)
+      : await punchOut(id as string);
+
     return sendResponse(res, { success: true, message: 'Punch out recorded', status: 200, data: punch });
   } catch (error) {
     next(error);
@@ -128,6 +134,29 @@ export async function rejectPunchHandler(req: Request, res: Response, next: Next
     }
     const punch = await rejectPunch(punchId, managerId);
     return sendResponse(res, { success: true, message: 'Punch rejected', status: 200, data: punch });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/** GET /attendance/today */
+export async function todayAttendanceHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      const err: any = new Error('Authentication required');
+      err.status = 401;
+      throw err;
+    }
+
+    const punch = await getTodayAttendance(userId);
+    const payload = {
+      punched_in: Boolean(punch && !punch.checkOut),
+      punch_in_time: punch?.checkIn ? new Date(punch.checkIn).toISOString() : null,
+      punch_out_time: punch?.checkOut ? new Date(punch.checkOut).toISOString() : null,
+    };
+
+    return sendResponse(res, { success: true, message: 'Today attendance fetched', status: 200, data: payload });
   } catch (error) {
     next(error);
   }

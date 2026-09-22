@@ -92,6 +92,22 @@ export async function punchOut(punchId: string) {
   });
 }
 
+/** Find the active punch for a user and complete it. */
+export async function punchOutForUser(userId: string) {
+  const punch = await prisma.punch.findFirst({
+    where: { userId, checkOut: null },
+    orderBy: { checkIn: 'desc' },
+  });
+
+  if (!punch) {
+    const err: any = new Error('No active punch found for user');
+    err.status = 404;
+    throw err;
+  }
+
+  return punchOut(punch.id);
+}
+
 /** Start a lunch break for a punch. */
 export async function startLunchBreak(punchId: string) {
   const punch = await prisma.punch.findUnique({ where: { id: punchId } });
@@ -159,6 +175,23 @@ export async function rejectPunch(punchId: string, managerId: string) {
     where: { id: punchId },
     data: { status: 'REJECTED', approvedById: managerId },
   });
+}
+
+/** Get the latest attendance record for the current day for a user. */
+export async function getTodayAttendance(userId: string) {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+
+  const punches = await prisma.punch.findMany({
+    where: { userId, checkIn: { gte: start, lte: end } },
+    orderBy: { checkIn: 'desc' },
+    take: 1,
+  });
+
+  return punches[0] ?? null;
 }
 
 /** Compute monthly attendance summary for a user. */

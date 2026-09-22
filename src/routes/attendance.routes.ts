@@ -7,6 +7,7 @@ import {
   flaggedPunchesHandler,
   approvePunchHandler,
   rejectPunchHandler,
+  todayAttendanceHandler,
   attendanceStatsHandler,
   leaveRequestHandler,
   approveLeaveHandler,
@@ -20,6 +21,8 @@ router.use(requireAuth);
 
 // Punch workflow
 router.post('/punch', punchInHandler);
+router.post('/punch/out', punchOutHandler);
+router.patch('/punch/out', punchOutHandler);
 router.patch('/punch/:id/out', punchOutHandler);
 router.post('/punch/:id/lunch-start', startLunchHandler);
 router.patch('/lunch/:id/end', endLunchHandler);
@@ -28,6 +31,9 @@ router.patch('/lunch/:id/end', endLunchHandler);
 router.get('/flagged', flaggedPunchesHandler);
 router.patch('/flagged/:id/approve', approvePunchHandler);
 router.patch('/flagged/:id/reject', rejectPunchHandler);
+
+// Today attendance for the logged in user
+router.get('/today', todayAttendanceHandler);
 
 // Attendance statistics
 router.get('/stats/:userId/:year/:month', attendanceStatsHandler);

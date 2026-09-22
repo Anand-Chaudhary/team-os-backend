@@ -1,5 +1,4 @@
 import { prisma } from '../db/prisma'
-import { Decimal } from '@prisma/client/runtime'
 
 export async function listShoots() {
   return prisma.shoot.findMany({ include: { crew: true, gearChecklist: true, client: true } })
@@ -26,7 +25,7 @@ export async function createShoot(data: {
       title,
       scheduledAt: new Date(scheduledAt),
       location: location ?? null,
-      cost: cost !== undefined && cost !== null ? new Decimal(cost) : undefined,
+      cost: cost !== undefined && cost !== null ? Number(cost) : undefined,
     },
   })
 }
@@ -36,7 +35,7 @@ export async function updateShoot(id: string, updateData: any) {
     updateData.scheduledAt = new Date(updateData.scheduledAt)
   }
   if (updateData.cost !== undefined) {
-    updateData.cost = updateData.cost !== null ? new Decimal(updateData.cost) : null
+    updateData.cost = updateData.cost !== null ? Number(updateData.cost) : null
   }
   return prisma.shoot.update({ where: { id }, data: updateData })
 }

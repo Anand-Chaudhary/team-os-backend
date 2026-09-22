@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma'
-import { TaskStatus, TaskPriority } from '@prisma/client'
+import { TaskStatus, TaskPriority } from '../generated/prisma/enums'
 
 export async function listTasks() {
   return prisma.task.findMany({ include: { assignees: true, revisions: true, client: true } })
