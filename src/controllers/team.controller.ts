@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { sendResponse } from '../utils/response';
+import { sanitizeUser } from '../utils/user';
 import {
   listEmployees as serviceListEmployees,
   getEmployeeById,
@@ -7,14 +8,6 @@ import {
   updateEmployee as serviceUpdateEmployee,
   deleteEmployee as serviceDeleteEmployee,
 } from '../services/team.service';
-
-/**
- * Helper to remove sensitive fields from a user record before returning it.
- */
-function sanitizeUser(user: any) {
-  const { passwordHash, ...safe } = user;
-  return safe;
-}
 
 /** GET /team – list all employees (users). */
 export async function listEmployees(req: Request, res: Response, next: NextFunction) {

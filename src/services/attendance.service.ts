@@ -27,33 +27,34 @@ function computeLateStatus(reportTime: string | null, graceMins: number | null, 
 /** Punch‑in: creates a Punch record, validates geofence, determines status. */
 export async function punchIn(data: {
   userId: string;
-  officeId: string;
+  officeId?: string | null;
   latitude: number;
   longitude: number;
 }) {
   const { userId, officeId, latitude, longitude } = data;
 
-  const [user, office] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId } }),
-    prisma.officeLocation.findUnique({ where: { id: officeId } }),
-  ]);
+  if (!userId) {
+    const err: any = new Error('User not found');
+    err.status = 404;
+    throw err;
+  }
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     const err: any = new Error('User not found');
     err.status = 404;
     throw err;
   }
-  if (!office) {
-    const err: any = new Error('Office location not found');
-    err.status = 404;
-    throw err;
-  }
 
-  const distanceM = haversineDistance(latitude, longitude, office.latitude, office.longitude);
+  const officeLatitude = Number(process.env.OFFICE_LATITUDE);
+  const officeLongitude = Number(process.env.OFFICE_LONGITUDE);
+  const officeRadiusM = Number(process.env.OFFICE_RADIUS_M);
+
+  const distanceM = haversineDistance(latitude, longitude, officeLatitude, officeLongitude);
   const now = new Date();
 
   let status: 'ON_TIME' | 'FLAGGED' | 'LATE' = 'ON_TIME';
-  if (distanceM > office.radiusM) status = 'FLAGGED';
+  if (distanceM > officeRadiusM) status = 'FLAGGED';
   if (computeLateStatus(user.reportTime ?? null, user.gracePeriodMins ?? null, now)) {
     status = status === 'FLAGGED' ? 'FLAGGED' : 'LATE';
   }
@@ -61,7 +62,7 @@ export async function punchIn(data: {
   const punch = await prisma.punch.create({
     data: {
       userId,
-      officeId,
+      officeId: null,
       checkIn: now,
       checkInLat: latitude,
       checkInLng: longitude,

@@ -9,13 +9,9 @@ import {
   REFRESH_TOKEN_TTL_MS,
   VALID_ROLES
 } from '../auth/auth.config'
+import { sanitizeUser } from '../utils/user'
 
 const db = prisma as any
-
-function sanitizeUser<T extends { passwordHash?: string | null }>(user: T) {
-  const { passwordHash, ...safeUser } = user
-  return safeUser
-}
 
 function hashToken(token: string) {
   return Buffer.from(token).toString('base64')
@@ -164,23 +160,13 @@ export async function getCurrentUserFromToken(token: string | undefined) {
     throw error
   }
 
-  const tokenHash = hashToken(token)
-  const refreshToken = await db.refreshToken.findFirst({
-    where: {
-      tokenHash,
-      revoked: false,
-      expiresAt: {
-        gt: new Date()
-      }
-    },
-    include: {
-      user: true
-    }
-  })
+  let payload: any = null
 
-  if (refreshToken?.user) {
+  try {
+    payload = jwt.verify(token, JWT_REFRESH_SECRET)
+  } catch {
     try {
-      jwt.verify(token, JWT_REFRESH_SECRET)
+      payload = jwt.verify(token, JWT_SECRET)
     } catch {
       const error = new Error('Authentication required') as Error & { status?: number }
       error.status = 401
@@ -188,13 +174,21 @@ export async function getCurrentUserFromToken(token: string | undefined) {
     }
   }
 
-  if (!refreshToken?.user) {
+  const userId = typeof payload?.userId === 'string' ? payload.userId : null
+  if (!userId) {
     const error = new Error('Authentication required') as Error & { status?: number }
     error.status = 401
     throw error
   }
 
-  return sanitizeUser(refreshToken.user)
+  const user = await db.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    const error = new Error('Authentication required') as Error & { status?: number }
+    error.status = 401
+    throw error
+  }
+
+  return sanitizeUser(user)
 }
 
 export async function logoutUser(token: string | undefined) {

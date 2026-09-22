@@ -8,6 +8,7 @@ import {
   registerUser
 } from '../services/auth.service'
 import { sendResponse } from '../utils/response'
+import { sanitizeUser } from '../utils/user'
 
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
@@ -22,7 +23,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
       message: 'Registration successful',
       status: 201,
       data: {
-        user: result.user,
+        user: sanitizeUser(result.user),
         token: result.accessToken
       }
     })
@@ -44,7 +45,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       message: 'Login successful',
       status: 200,
       data: {
-        user: result.user,
+        user: sanitizeUser(result.user),
         token: result.accessToken
       }
     })
@@ -80,7 +81,7 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
       message: 'Profile fetched successfully',
       status: 200,
       data: {
-        user
+        user: sanitizeUser(user)
       }
     })
   } catch (error) {

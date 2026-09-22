@@ -5,7 +5,10 @@ import { sendResponse } from '../utils/response'
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
-    const token = req.cookies?.[getRefreshTokenCookieName()]
+    const cookieToken = req.cookies?.[getRefreshTokenCookieName()]
+    const authHeader = req.headers.authorization
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : undefined
+    const token = bearerToken ?? cookieToken
     const user = await getCurrentUserFromToken(token)
 
     req.user = user

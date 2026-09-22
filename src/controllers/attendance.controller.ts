@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { sendResponse } from '../utils/response';
+import { sanitizeUser } from '../utils/user';
 import {
   punchIn,
   punchOut,
@@ -25,13 +26,13 @@ export async function punchInHandler(req: Request, res: Response, next: NextFunc
       err.status = 401;
       throw err;
     }
-    if (!officeId || latitude === undefined || longitude === undefined) {
-      const err: any = new Error('officeId, latitude, longitude are required');
+    if (latitude === undefined || longitude === undefined) {
+      const err: any = new Error('latitude and longitude are required');
       err.status = 400;
       throw err;
     }
     // Cast to expected types to satisfy TypeScript
-    const officeIdStr = officeId as string;
+    const officeIdStr = officeId as string | undefined;
     const latitudeNum = Number(latitude);
     const longitudeNum = Number(longitude);
     if (Number.isNaN(latitudeNum) || Number.isNaN(longitudeNum)) {
@@ -86,7 +87,11 @@ export async function endLunchHandler(req: Request, res: Response, next: NextFun
 export async function flaggedPunchesHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const punches = await getFlaggedPunches();
-    return sendResponse(res, { success: true, message: 'Flagged punches fetched', status: 200, data: punches });
+    const safePunches = punches.map((punch) => ({
+      ...punch,
+      user: punch.user ? sanitizeUser(punch.user) : null,
+    }));
+    return sendResponse(res, { success: true, message: 'Flagged punches fetched', status: 200, data: safePunches });
   } catch (error) {
     next(error);
   }
