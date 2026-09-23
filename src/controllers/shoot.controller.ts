@@ -86,12 +86,21 @@ export async function assignCrew(req: Request, res: Response, next: NextFunction
       err.status = 400
       throw err
     }
+    // Validate each crew entry
+    for (const member of crew) {
+      if (!member.userId) {
+        const err: any = new Error('Each crew entry must include a "userId" field')
+        err.status = 400
+        throw err
+      }
+    }
     const result = await serviceAssignCrew(id, crew)
     return sendResponse(res, { success: true, message: 'Crew assigned', status: 200, data: result })
   } catch (error) {
     next(error)
   }
 }
+
 
 export async function addGear(req: Request, res: Response, next: NextFunction) {
   try {

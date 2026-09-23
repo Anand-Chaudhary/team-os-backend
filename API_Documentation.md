@@ -106,9 +106,10 @@
 |--------|----------|--------------|-------------|----------------|
 | **GET** | `/tasks` | – | List all tasks. | `Array<Task>` |
 | **GET** | `/tasks/:id` | – | Get a single task by `id`. | `<Task>` |
-| **POST** | `/tasks` | `{ "title":"…", "description?":"…", "clientId?":"…", "deadline?":"YYYY-MM-DD" or ISO string, "priority?":"LOW|MEDIUM|HIGH|URGENT" }` | Create a new task. | `<Task>` |
+| **POST** | `/tasks` | `{ "title":"…", "description?":"…", "clientId?":"…", "deadline?":"YYYY-MM-DD" or ISO string, "priority?":"LOW|MEDIUM|HIGH|URGENT (case‑insensitive)" }` | Create a new task. | `<Task>` |
 | **PATCH** | `/tasks/:id` | Any subset of `title`, `description`, `status`, `priority`, `deadline`, `clientId`. | Update task data. | `<Task>` |
 | **DELETE** | `/tasks/:id` | – | Delete a task. | `null` |
+> **Note:** `priority` values are case‑insensitive; any of `low`, `medium`, `high`, `urgent` will be normalized to the Prisma enum. Invalid values default to `MEDIUM`.
 | **POST** | `/tasks/:id/assignees` | `{ "assigneeIds":["user-id-1","user-id-2"] }` | Assign one or more users to a task. | `<Task>` |
 | **POST** | `/tasks/:id/revisions` | `{ "note":"…", "attachmentUrl?":"https://…" }` | Add a revision note to a task. | `<TaskRevision>` |
 
@@ -158,7 +159,7 @@
 | **POST** | `/shoots` | `{ "clientId?":"…", "title":"…", "scheduledAt":"YYYY-MM-DDTHH:mm:ss.sssZ", "location?":"…", "cost?": 2500 }` | Create a new shoot. | `<Shoot>` |
 | **PATCH** | `/shoots/:id` | Any subset of `title`, `scheduledAt`, `location`, `cost`, `clientId`. | Update shoot data. | `<Shoot>` |
 | **DELETE** | `/shoots/:id` | – | Delete a shoot. | `null` |
-| **POST** | `/shoots/:id/crew` | `{ "crew":[{"userId":"…","role?":"Camera"}] }` | Assign crew members to the shoot. | `<Shoot>` |
+| **POST** | `/shoots/:id/crew` | `{ "crew":[{"userId":"…","role?":"Camera"}] }` | Assign crew members to the shoot. Requires each crew object to include a `userId`. | `<Shoot>` |
 | **POST** | `/shoots/:id/gear` | `{ "name":"Tripod", "packed?": false }` | Add a gear item to the shoot checklist. | `<GearItem>` |
 
 ### Payload snippets (summary)
@@ -262,6 +263,62 @@
 | **GET** | `/health/ping` (exposed as `/health/` in the router) | Returns a simple *pong* message. | `{ "message": "pong" }` |
 
 ---
+
+## 9. Calendar
+
+> Base path: **`/calendar`** – all routes (except the public endpoint) require `requireAuth`.
+
+### Payload shapes
+
+**CalendarPost**
+```json
+{
+  "id": "string",
+  "clientId": "string",
+  "taskId": "string|null",
+  "caption": "string|null",
+  "postType": "string",
+  "scheduledDate": "ISO‑date‑time",
+  "approvalStatus": "string|null",
+  "revisionReason": "string|null",
+  "posted": false,
+  "postedAt": "ISO‑date‑time|null",
+  "createdAt": "ISO‑date‑time",
+  "updatedAt": "ISO‑date‑time"
+}
+```
+
+**CreateCalendarPostRequest**
+```json
+{
+  "clientId": "string",
+  "taskId": "string|null",
+  "caption": "string|null",
+  "postType": "string",
+  "scheduledDate": "ISO‑date‑time",
+  "approvalStatus": "string|null",
+  "revisionReason": "string|null"
+}
+```
+
+**UpdateCalendarPostRequest** – any subset of CalendarPost fields.
+
+### Endpoints
+
+| Method | Endpoint | Request Body | Description | Success `data` |
+|--------|----------|--------------|-------------|----------------|
+| **GET** | `/calendar` | – | List all calendar posts. | `Array<CalendarPost>` |
+| **GET** | `/calendar/:id` | – | Retrieve a single calendar post. | `CalendarPost` |
+| **POST** | `/calendar` | `CreateCalendarPostRequest` | Create a new calendar post. | `CalendarPost` |
+| **PATCH** | `/calendar/:id` | `UpdateCalendarPostRequest` | Update an existing post. | `CalendarPost` |
+| **DELETE** | `/calendar/:id` | – | Delete a calendar post. | `null` |
+| **PATCH** | `/calendar/:id/mark-posted` | – | Mark the post as posted (sets `posted` flag). | `CalendarPost` |
+
+### Public read‑only endpoint (no auth)
+
+| Method | Endpoint | Query Params | Description | Success `data` |
+|--------|----------|--------------|-------------|----------------|
+| **GET** | `/clients/:clientId/calendar` | `token` (share‑link token) | Fetch public calendar posts for a client after validating the token. | `Array<CalendarPost>` |
 
 ### Integration Quick‑Check List
 1. **Base URL** – prepend your deployment host (e.g. `https://api.team‑os.com`).
