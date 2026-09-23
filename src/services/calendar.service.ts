@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma';
+import { PostApprovalStatus } from '../generated/prisma/enums';
 
 /** List all calendar posts (auth-protected). */
 export async function listCalendarPosts() {
@@ -17,7 +18,7 @@ export async function createCalendarPost(data: {
   caption?: string | null;
   postType: string;
   scheduledDate: Date | string;
-  approvalStatus?: string; // enum PostApprovalStatus
+  approvalStatus?: PostApprovalStatus; // enum PostApprovalStatus
   revisionReason?: string | null;
 }) {
   return prisma.calendarPost.create({ data });
