@@ -62,5 +62,10 @@ export async function updateEmployee(id: string, updateData: any) {
  * Delete an employee by ID.
  */
 export async function deleteEmployee(id: string) {
-  return prisma.user.delete({ where: { id } });
+  // Delete related punches first to avoid FK constraint violation
+  // Using a transaction ensures atomicity – either all deletions succeed or none.
+  return prisma.$transaction([
+    prisma.punch.deleteMany({ where: { userId: id } }),
+    prisma.user.delete({ where: { id } }),
+  ]);
 }

@@ -9,6 +9,7 @@ import {
   markPostAsPosted,
   getPublicCalendarPosts,
 } from '../services/calendar.service';
+import { PostApprovalStatus } from '../generated/prisma/enums';
 
 /** GET /calendar – list all posts (auth required). */
 export async function listPosts(req: Request, res: Response, next: NextFunction) {
@@ -53,17 +54,34 @@ export async function createPost(req: Request, res: Response, next: NextFunction
       err.status = 400;
       throw err;
     }
+    // Normalize approvalStatus to a valid enum value; default to DRAFT if missing/invalid
+    let normalizedStatus: PostApprovalStatus = PostApprovalStatus.DRAFT;
+    if (approvalStatus) {
+      const upper = (approvalStatus as string).toUpperCase();
+      if (Object.values(PostApprovalStatus).includes(upper as PostApprovalStatus)) {
+        normalizedStatus = upper as PostApprovalStatus;
+      }
+    }
     const post = await createCalendarPost({
       clientId,
       taskId,
       caption,
       postType,
       scheduledDate,
-      approvalStatus,
+      approvalStatus: normalizedStatus,
       revisionReason,
     });
     return sendResponse(res, { success: true, message: 'Calendar post created', status: 201, data: post });
   } catch (error) {
+    // Send a clean JSON error for task‑not‑found rather than a generic stack trace
+    if ((error as any)?.status === 400 && (error as any).message?.includes('Task not found')) {
+      return sendResponse(res, {
+        success: false,
+        message: (error as any).message,
+        status: 400,
+        data: null,
+      });
+    }
     next(error);
   }
 }

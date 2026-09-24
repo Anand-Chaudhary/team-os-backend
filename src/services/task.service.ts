@@ -75,6 +75,14 @@ export async function deleteTask(id: string) {
   return prisma.task.delete({ where: { id } });
 }
 
+/** Returns tasks assigned to a particular user. */
+export async function listUserTasks(userId: string) {
+  return prisma.task.findMany({
+    where: { assignees: { some: { userId } } },
+    include: { assignees: true, revisions: true, client: true },
+  });
+}
+
 export async function assignTask(taskId: string, assigneeIds: string[]) {
   const creates = assigneeIds.map((userId) => ({ taskId, userId }));
   await prisma.taskAssignee.createMany({ data: creates, skipDuplicates: true });

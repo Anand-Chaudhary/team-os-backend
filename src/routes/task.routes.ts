@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
   listTasks,
+  listMyTasks,
   getTask,
   createTask,
   updateTask,
@@ -13,6 +14,7 @@ import { requireAuth } from '../middleware/auth.middleware'
 const router = Router()
 router.use(requireAuth)
 router.get('/', listTasks)
+router.get('/me', listMyTasks)
 router.get('/:id', getTask)
 router.post('/', createTask)
 router.patch('/:id', updateTask)

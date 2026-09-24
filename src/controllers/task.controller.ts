@@ -6,6 +6,7 @@ import {
   createTask as serviceCreateTask,
   updateTask as serviceUpdateTask,
   deleteTask as serviceDeleteTask,
+  listUserTasks as serviceListUserTasks,
   assignTask as serviceAssignTask,
   addTaskRevision as serviceAddTaskRevision,
 } from '../services/task.service'
@@ -14,6 +15,22 @@ export async function listTasks(req: Request, res: Response, next: NextFunction)
   try {
     const tasks = await serviceListTasks()
     return sendResponse(res, { success: true, message: 'Tasks fetched', status: 200, data: tasks })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/** Get tasks assigned to the authenticated employee */
+export async function listMyTasks(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = (req.user as any)?.id
+    if (!userId) {
+      const err: any = new Error('Unauthenticated')
+      err.status = 401
+      throw err
+    }
+    const tasks = await serviceListUserTasks(userId)
+    return sendResponse(res, { success: true, message: 'Your tasks fetched', status: 200, data: tasks })
   } catch (error) {
     next(error)
   }

@@ -21,6 +21,16 @@ export async function createCalendarPost(data: {
   approvalStatus?: PostApprovalStatus; // enum PostApprovalStatus
   revisionReason?: string | null;
 }) {
+  const { clientId, taskId } = data;
+  // If a taskId is provided, ensure the referenced task exists to avoid FK violations.
+  if (taskId) {
+    const task = await prisma.task.findUnique({ where: { id: taskId } });
+    if (!task) {
+      const err: any = new Error('Task not found for provided taskId');
+      err.status = 400;
+      throw err;
+    }
+  }
   return prisma.calendarPost.create({ data });
 }
 
