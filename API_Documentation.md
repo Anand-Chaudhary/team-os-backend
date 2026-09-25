@@ -328,5 +328,64 @@
 5. **Pagination** – currently list endpoints return the full collection (no pagination).
 
 ---
+## 10. Leads
+> Base path: **`/leads`** – all routes require authentication.
+
+### Payload shapes
+**Lead**
+```json
+{
+  "id": "string",
+  "name": "string",
+  "stage": "NEW|CONTACTED|QUALIFIED|PROPOSAL|CLOSED",
+  "clientId": "string|null",
+  "ownerId": "string",
+  "createdAt": "ISO-date-time",
+  "updatedAt": "ISO-date-time"
+}
+```
+
+### Endpoints
+| Method | Endpoint | Request Body | Description | Success `data` |
+|--------|----------|--------------|-------------|----------------|
+| **GET** | `/leads` | – | List all leads. | `Array<Lead>` |
+| **GET** | `/leads/:id` | – | Retrieve a lead by ID. | `Lead` |
+| **POST** | `/leads` | `Lead` (without `id`, timestamps) | Create a new lead. | `Lead` |
+| **PATCH** | `/leads/:id` | Partial `Lead` | Update a lead. | `Lead` |
+| **DELETE** | `/leads/:id` | – | Delete a lead. | `null` |
+
+---
+## 11. Finance
+> Base path: **`/finance`** – all routes require authentication.
+
+### Payload shapes
+**FinanceEntry**
+```json
+{
+  "id": "string",
+  "type": "INCOME|EXPENSE",
+  "category": "string",
+  "amount": number,
+  "month": "YYYY-MM",
+  "clientId": "string|null",
+  "isInternal": boolean,
+  "note": "string|null",
+  "enteredById": "string",
+  "createdAt": "ISO-date-time",
+  "updatedAt": "ISO-date-time"
+}
+```
+
+### Endpoints
+| Method | Endpoint | Request Body | Description | Success `data` |
+|--------|----------|--------------|-------------|----------------|
+| **GET** | `/finance` | – | List finance entries (optional `month`, `clientId` query). | `Array<FinanceEntry>` |
+| **GET** | `/finance/:id` | – | Retrieve a finance entry. | `FinanceEntry` |
+| **POST** | `/finance` | `FinanceEntry` (without `id`, timestamps) | Create a new entry. | `FinanceEntry` |
+| **PATCH** | `/finance/:id` | Partial `FinanceEntry` | Update an entry. | `FinanceEntry` |
+| **DELETE** | `/finance/:id` | – | Delete an entry. | `null` |
+| **GET** | `/finance/summary/:year/:month` | – | Summarize totals per category/type for a month. | `Array<{category:string,type:string,total:number}>` |
+
+---
 
 *Generated with **Claude Code** – ready to be handed to the front‑end team for immediate integration.*
