@@ -210,6 +210,7 @@
 | **PATCH** | `/attendance/flagged/:id/approve` | – | Approve a flagged punch. | `<Punch>` |
 | **PATCH** | `/attendance/flagged/:id/reject` | – | Reject a flagged punch. | `<Punch>` |
 | **GET** | `/attendance/stats/:userId/:year/:month` | – | Monthly attendance statistics for a user. | `<AttendanceStats>` |
+| **GET** | `/attendance/leave-request` | Get a leave requests. | `<LeaveRequests>` |
 | **POST** | `/attendance/leave-request` | `{ "startDate":"YYYY‑MM‑DD", "endDate":"YYYY‑MM‑DD", "reason":"…" }` | Submit a leave request. | `<LeaveRequest>` |
 | **PATCH** | `/attendance/leave/:id/approve` | – | Manager approves a leave request. | `<LeaveRequest>` |
 | **PATCH** | `/attendance/leave/:id/reject` | – | Manager rejects a leave request. | `<LeaveRequest>` |
