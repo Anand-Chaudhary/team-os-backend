@@ -16,6 +16,7 @@ import {
   getLeaveBalance,
   getTodayAttendance,
   punchOutForUser,
+  getLeaveRequests,
 } from '../services/attendance.service';
 
 /** POST /attendance/punch – employee punch‑in */
@@ -246,6 +247,22 @@ export async function leaveBalanceHandler(req: Request, res: Response, next: Nex
     const userIdStr = userId as string;
     const balance = await getLeaveBalance(userIdStr);
     return sendResponse(res, { success: true, message: 'Leave balance', status: 200, data: balance });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/** GET /attendance/leave-requests */
+export async function getLeaveRequestsHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = (req.user as any)?.id;
+    if (!userId) {
+      const err: any = new Error('Authentication required');
+      err.status = 401;
+      throw err;
+    }
+    const requests = await getLeaveRequests(userId);
+    return sendResponse(res, { success: true, message: 'Leave requests fetched', status: 200, data: requests });
   } catch (error) {
     next(error);
   }

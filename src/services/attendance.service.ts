@@ -280,3 +280,19 @@ export async function getLeaveBalance(userId: string) {
   const total = 2;
   return { total, used, remaining: Math.max(total - used, 0) };
 }
+
+/** Get leave requests for a user */
+export async function getLeaveRequests(userId: string) {
+  // Verify user exists
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    const err: any = new Error('User not found');
+    err.status = 404;
+    throw err;
+  }
+  // Return all leave requests for the user, most recent first
+  return prisma.leaveRequest.findMany({
+    where: { userId },
+    orderBy: { startDate: 'desc' },
+  });
+}
