@@ -1,3 +1,4 @@
+import { createNotification } from './notification.service'
 import { prisma } from '../db/prisma';
 import { TaskStatus, TaskPriority } from '../generated/prisma/enums';
 
@@ -86,6 +87,17 @@ export async function listUserTasks(userId: string) {
 export async function assignTask(taskId: string, assigneeIds: string[]) {
   const creates = assigneeIds.map((userId) => ({ taskId, userId }));
   await prisma.taskAssignee.createMany({ data: creates, skipDuplicates: true });
+  // Notify each assignee about the new task assignment
+  await Promise.all(
+    assigneeIds.map((uid) =>
+      createNotification({
+        userId: uid,
+        title: 'New Task Assigned',
+        message: `You have been assigned to task ${taskId}`,
+        link: `/tasks/${taskId}`,
+      })
+    )
+  );
   return prisma.task.findUnique({
     where: { id: taskId },
     include: { assignees: { include: { user: true } } },
@@ -98,7 +110,7 @@ export async function addTaskRevision(
 ) {
   const maxRound = await prisma.taskRevision
     .findMany({ where: { taskId }, select: { roundNumber: true } })
-    .then((revs) => revs.reduce((max, r) => (r.roundNumber > max ? r.roundNumber : max), 0));
+    .then((revs: { roundNumber: number }[]) => revs.reduce((max, r) => (r.roundNumber > max ? r.roundNumber : max), 0));
 
   const roundNumber = maxRound + 1;
   return prisma.taskRevision.create({
