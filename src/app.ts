@@ -4,7 +4,8 @@ import cookie from 'cookie-parser'
 import cors from 'cors'
 import morgan from 'morgan'
 import apiRoutes from './routes'
-import type { ApiResponse } from './utils/response'
+import path from 'path';
+import { ApiResponse } from './utils/response';
 
 const app = express();
 
@@ -25,6 +26,10 @@ app.use(cors({
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     credentials: true
 }));
+
+// Serve generated PDF salary slips (iframe‑friendly)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 
 app.use((_, res, next) => {
   res.success = (payload: ApiResponse<unknown>) => {

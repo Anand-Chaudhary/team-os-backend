@@ -261,7 +261,16 @@ export async function getLeaveRequestsHandler(req: Request, res: Response, next:
       err.status = 401;
       throw err;
     }
-    const requests = await getLeaveRequests(userId);
+    const rawStatus = (req.query as any).status;
+    // Accept only the enum values without surrounding quotes
+    let status: string | undefined;
+    if (typeof rawStatus === 'string') {
+      const cleaned = rawStatus.replace(/^\"+|\"+$/g, '').toUpperCase();
+      if (['PENDING', 'APPROVED', 'REJECTED'].includes(cleaned)) {
+        status = cleaned;
+      }
+    }
+    const requests = await getLeaveRequests(userId, status);
     return sendResponse(res, { success: true, message: 'Leave requests fetched', status: 200, data: requests });
   } catch (error) {
     next(error);

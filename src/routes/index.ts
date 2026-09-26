@@ -9,6 +9,7 @@ import shootRoutes from './shoot.routes'
 import calendarRoutes from './calendar.routes'
 import publicCalendarRoutes from './publicCalendar.routes'
 import leadRoutes from './lead.routes'
+import salarySlipRoutes from './salarySlip.routes'
 import financeRoutes from './finance.routes'
 
 const router = Router()
@@ -25,5 +26,6 @@ router.use('/shoots', shootRoutes)
 router.use('/calendar', calendarRoutes)
 router.use('/leads', leadRoutes)
 router.use('/finance', financeRoutes)
+router.use('/salary-slips', salarySlipRoutes)
 
 export default router

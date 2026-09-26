@@ -68,6 +68,7 @@ model User {
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
+  salarySlips SalarySlip[]
   @@index([role])
   @@index([status])
 }
@@ -425,6 +426,18 @@ model FinanceEntry {
   @@index([month])
   @@index([clientId])
 }
+
+model SalarySlip {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  month     DateTime
+  pdfPath   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, month])
+}
+
 
 model Notification {
   id            String   @id @default(cuid())

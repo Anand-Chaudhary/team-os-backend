@@ -282,7 +282,7 @@ export async function getLeaveBalance(userId: string) {
 }
 
 /** Get leave requests for a user */
-export async function getLeaveRequests(userId: string) {
+export async function getLeaveRequests(userId: string, status?: string) {
   // Verify user exists
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
@@ -290,9 +290,14 @@ export async function getLeaveRequests(userId: string) {
     err.status = 404;
     throw err;
   }
-  // Return all leave requests for the user, most recent first
+  // Build where clause
+  const where: any = { userId };
+  if (status) {
+    where.status = status;
+  }
+  // Return leave requests for the user, optionally filtered by status, most recent first
   return prisma.leaveRequest.findMany({
-    where: { userId },
+    where,
     orderBy: { startDate: 'desc' },
   });
 }
