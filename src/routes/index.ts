@@ -11,25 +11,28 @@ import publicCalendarRoutes from './publicCalendar.routes'
 import notificationRoutes from './notification.routes'
 import leadRoutes from './lead.routes'
 import clientReviewRoutes from './clientReview.routes'
-import salarySlipRoutes from './salarySlip.routes'
 import financeRoutes from './finance.routes'
+import salarySlipRoutes from './salarySlip.routes'
+import contentCalendarRoutes from './contentCalendar.routes'
 
 const router = Router()
 
 router.use('/health', exampleRoutes)
 router.use('/auth', authRoutes)
 router.use('/team', teamRoutes)
-// Public calendar view – mounted before auth‑protected routes to avoid the global auth middleware
 router.use(publicCalendarRoutes)
 router.use('/clients', clientRoutes)
 router.use('/attendance', attendanceRoutes)
 router.use('/tasks', taskRoutes)
 router.use('/shoots', shootRoutes)
 router.use('/calendar', calendarRoutes)
-router.use('/notifications', notificationRoutes)
 router.use('/leads', leadRoutes)
-router.use('/client-review', clientReviewRoutes)
+router.use('/notifications', notificationRoutes)
 router.use('/finance', financeRoutes)
+router.use('/content-calendar', contentCalendarRoutes)
+router.use('/client-review', clientReviewRoutes)
 router.use('/salary-slips', salarySlipRoutes)
+
+
 
 export default router

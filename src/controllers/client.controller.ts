@@ -53,8 +53,8 @@ export async function createClient(req: Request, res: Response, next: NextFuncti
       contactEmail,
       contactPhone,
       whatsappGroupUrl,
-      contentTags,
       monthlyGoal,
+      password,
     } = req.body ?? {};
 
     if (!name) {
@@ -68,8 +68,8 @@ export async function createClient(req: Request, res: Response, next: NextFuncti
       contactEmail,
       contactPhone,
       whatsappGroupUrl,
-      contentTags,
       monthlyGoal,
+      password,
     });
 
     return sendResponse(res, {
@@ -92,7 +92,6 @@ export async function updateClient(req: Request, res: Response, next: NextFuncti
       contactEmail,
       contactPhone,
       whatsappGroupUrl,
-      contentTags,
       monthlyGoal,
     } = req.body ?? {};
 
@@ -101,7 +100,6 @@ export async function updateClient(req: Request, res: Response, next: NextFuncti
       ...(contactEmail !== undefined && { contactEmail: contactEmail ?? null }),
       ...(contactPhone !== undefined && { contactPhone: contactPhone ?? null }),
       ...(whatsappGroupUrl !== undefined && { whatsappGroupUrl: whatsappGroupUrl ?? null }),
-      ...(contentTags !== undefined && { contentTags: contentTags ?? [] }),
       ...(monthlyGoal !== undefined && { monthlyGoal: monthlyGoal ?? null }),
     };
 

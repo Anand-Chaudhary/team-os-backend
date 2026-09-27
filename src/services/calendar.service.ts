@@ -21,7 +21,11 @@ export async function createCalendarPost(data: {
   approvalStatus?: PostApprovalStatus; // enum PostApprovalStatus
   revisionReason?: string | null;
 }) {
-  const { clientId, taskId } = data;
+  const { clientId, taskId, caption, postType, scheduledDate, approvalStatus, revisionReason } = data;
+
+  // Ensure scheduledDate is a proper DateTime for Prisma.
+  const scheduleValue = typeof scheduledDate === 'string' ? new Date(scheduledDate) : scheduledDate;
+
   // If a taskId is provided, ensure the referenced task exists to avoid FK violations.
   if (taskId) {
     const task = await prisma.task.findUnique({ where: { id: taskId } });
@@ -31,7 +35,18 @@ export async function createCalendarPost(data: {
       throw err;
     }
   }
-  return prisma.calendarPost.create({ data });
+
+  return prisma.calendarPost.create({
+    data: {
+      clientId,
+      ...(taskId && { taskId }),
+      ...(caption !== undefined && { caption }),
+      postType,
+      scheduledDate: scheduleValue,
+      ...(approvalStatus && { approvalStatus }),
+      ...(revisionReason !== undefined && { revisionReason }),
+    },
+  });
 }
 
 /** Update an existing calendar post. */

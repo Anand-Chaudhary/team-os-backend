@@ -35,6 +35,8 @@
 | **POST** | `/auth/register` | `{ "name": "…", "email": "…", "password": "…", "phone?": "…", "role?": "…" }` | Create a new user account. | `{ "user": <User>, "token": "<access‑token>" }` |
 | **POST** | `/auth/login` | `{ "email": "…", "password": "…" }` | Log in and receive an access token. | `{ "user": <User>, "token": "<access‑token>" }` |
 | **POST** | `/auth/logout` | – | Clears the refresh‑token cookie and ends the session. | `null` |
+| **POST** | `/auth/client-login` | `{ "email": "…", "password": "…" }` | Client portal login – returns client data and a JWT token for client‑side authentication. | `{ "client": <Client>, "token": "<jwt>" }` |
+
 
 ---
 
@@ -314,6 +316,7 @@
 | **PATCH** | `/calendar/:id` | `UpdateCalendarPostRequest` | Update an existing post. | `CalendarPost` |
 | **DELETE** | `/calendar/:id` | – | Delete a calendar post. | `null` |
 | **PATCH** | `/calendar/:id/mark-posted` | – | Mark the post as posted (sets `posted` flag). | `CalendarPost` |
+| **GET** | `/content-calendar/:clientId` | – | Fetch calendar posts for a client (authenticated). Returns posts for the clientId. | `Array<CalendarPost>` |
 
 ### Public read‑only endpoint (no auth)
 
@@ -329,6 +332,17 @@
 5. **Pagination** – currently list endpoints return the full collection (no pagination).
 
 ---
+
+## 13. Client Review
+
+> Base path: **`/client-review`** – all routes require `requireAuth`. The POST endpoint expects a multipart/form‑data request with a `media` file field.
+
+| Method | Endpoint | Request Body | Description | Success `data` |
+|--------|----------|--------------|-------------|----------------|
+| **POST** | `/client-review` | multipart/form-data (fields: `clientId` (string), `postType` (string), `scheduledDate` (ISO‑date‑time), optional `caption` (string), file `media`) | Employee creates a new post for client review. Media file is saved to `/uploads/` and its URL stored as `caption` if no caption provided. Returns the created `CalendarPost` (status DRAFT). | `<CalendarPost>` |
+| **GET** | `/client-review` | optional query `clientId` to filter | List all posts in **DRAFT** status awaiting client review. | `Array<CalendarPost>` |
+| **POST** | `/client-review/:id/review` | `{ "feedback": "string" }` | Client submits a change request for a post. Limited to a maximum of 3 feedback entries per post. Updates post's `approvalStatus` to `REVISION_REQUESTED` and records the feedback. | `<Review>` (internal record) |
+| **GET** | `/client-review/:id/reviews` | – | Retrieve all feedback entries submitted by the client for the given post. | `Array<{ id:string, calendarPostId:string, feedback:string, createdAt:string }>` |
 
 ## 10. Leads
 > Base path: **`/leads`** – all routes require authentication.

@@ -23,18 +23,24 @@ export async function createClient(data: {
   contactEmail?: string | null;
   contactPhone?: string | null;
   whatsappGroupUrl?: string | null;
-  contentTags?: string[];
   monthlyGoal?: number | null;
+  password?: string;
 }) {
-  const { name, contactEmail, contactPhone, whatsappGroupUrl, contentTags, monthlyGoal } = data;
+  const { name, contactEmail, contactPhone, whatsappGroupUrl, monthlyGoal, password } = data;
+  let passwordHash: string | undefined;
+  if (password) {
+    const bcrypt = await import('bcrypt');
+    passwordHash = await bcrypt.hash(password, 10);
+  }
   return prisma.client.create({
     data: {
       name,
       contactEmail: contactEmail ?? null,
       contactPhone: contactPhone ?? null,
       whatsappGroupUrl: whatsappGroupUrl ?? null,
-      contentTags: contentTags ?? [],
+//      contentTags: contentTags ?? [],
       monthlyGoal: monthlyGoal ?? null,
+      passwordHash,
     },
   });
 }

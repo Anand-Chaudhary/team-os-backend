@@ -1,4 +1,8 @@
 import { Router } from 'express';
+import fs from 'fs';
+import multer from 'multer';
+import path from 'path';
+
 import {
   createClientReview,
   listPendingReviews,
@@ -11,15 +15,16 @@ const router = Router();
 router.use(requireAuth);
 
 // Employee creates a new post for client review (media upload information)
-import multer from 'multer';
-import path from 'path';
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadsDir = path.join(process.cwd(), 'uploads');
+  destination: (_req, _file, cb) => {
     cb(null, uploadsDir);
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     const unique = `${Date.now()}-${file.originalname}`;
     cb(null, unique);
   },

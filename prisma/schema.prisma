@@ -290,7 +290,7 @@ model Client {
   contactEmail     String?
   contactPhone     String?
   whatsappGroupUrl String?
-  contentTags      String[]  // e.g. ["Reels", "Static Posts", "Blogs"]
+  passwordHash    String?   // bcrypt hash for client login
   monthlyGoal      Int?      // target posts/month
 
   poc              User?     @relation("ClientPOC", fields: [pocId], references: [id])
