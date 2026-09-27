@@ -9,11 +9,14 @@ import {
 import { requireAuth } from '../middleware/auth.middleware';
 
 const router = Router();
-router.use(requireAuth);
 
+// Public route for landing page chatbot
+router.post('/', createLeadHandler);
+
+// Protected routes
+router.use(requireAuth);
 router.get('/', listLeadsHandler);
 router.get('/:id', getLeadHandler);
-router.post('/', createLeadHandler);
 router.patch('/:id', updateLeadHandler);
 router.delete('/:id', deleteLeadHandler);
 
