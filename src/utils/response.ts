@@ -14,6 +14,6 @@ export function buildResponse<T>(payload: Partial<ApiResponse<T>> & Pick<ApiResp
   }
 }
 
-export function sendResponse<T>(res: { json: (body: ApiResponse<T>) => any }, payload: Partial<ApiResponse<T>> & Pick<ApiResponse<T>, 'success' | 'message' | 'status'> & { data?: T | null }): any {
-  return res.json(buildResponse(payload))
+export function sendResponse<T>(res: any, payload: Partial<ApiResponse<T>> & Pick<ApiResponse<T>, 'success' | 'message' | 'status'> & { data?: T | null }): any {
+  return res.status(payload.status).json(buildResponse(payload))
 }
