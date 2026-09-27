@@ -10,13 +10,17 @@ import {
 /** POST /client-review – employee uploads media for client review */
 export async function createClientReview(req: Request, res: Response, next: NextFunction) {
   try {
-    const { clientId, postType, scheduledDate, mediaUrl, caption } = req.body ?? {};
+    const file = (req as any).file;
+    const mediaUrl = file ? `/uploads/${file.filename}` : undefined;
+    // Prefer caption from body, if not provided use mediaUrl as caption placeholder
+    const { clientId, postType, scheduledDate, caption } = req.body ?? {};
     if (!clientId || !postType || !scheduledDate) {
       const err: any = new Error('clientId, postType, and scheduledDate are required');
       err.status = 400;
       throw err;
     }
-    const post = await svcCreateClientReview({ clientId, postType, scheduledDate, mediaUrl, caption });
+    const finalCaption = caption ?? mediaUrl;
+    const post = await svcCreateClientReview({ clientId, postType, scheduledDate, mediaUrl, caption: finalCaption });
     return sendResponse(res, {
       success: true,
       message: 'Review post created',

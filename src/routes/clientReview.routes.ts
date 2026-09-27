@@ -11,7 +11,23 @@ const router = Router();
 router.use(requireAuth);
 
 // Employee creates a new post for client review (media upload information)
-router.post('/', createClientReview);
+import multer from 'multer';
+import path from 'path';
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const unique = `${Date.now()}-${file.originalname}`;
+    cb(null, unique);
+  },
+});
+
+const upload = multer({ storage });
+
+router.post('/', upload.single('media'), createClientReview);
 
 // Employee fetches posts awaiting client review (optionally filter by clientId via query)
 router.get('/', listPendingReviews);
