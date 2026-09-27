@@ -339,6 +339,7 @@ model CalendarPost {
   scheduledDate  DateTime
   approvalStatus PostApprovalStatus  @default(DRAFT)
   revisionReason String?
+  clientReviews  ClientReview[]
   posted         Boolean             @default(false)
   postedAt       DateTime?
 
@@ -466,4 +467,14 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+model ClientReview {
+  id String @id @default(cuid())
+  calendarPostId String
+  calendarPost CalendarPost @relation(fields: [calendarPostId], references: [id], onDelete: Cascade)
+  feedback String
+  createdAt DateTime @default(now())
+
+  @@index([calendarPostId])
 }
