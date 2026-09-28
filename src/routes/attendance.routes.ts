@@ -14,6 +14,7 @@ import {
   rejectLeaveHandler,
   leaveBalanceHandler,
   getLeaveRequestsHandler,
+  getMyLeavesHandler,
 } from '../controllers/attendance.controller';
 import { requireAuth } from '../middleware/auth.middleware';
 
@@ -45,5 +46,6 @@ router.patch('/leave/:id/approve', approveLeaveHandler);
 router.patch('/leave/:id/reject', rejectLeaveHandler);
 router.get('/leave-balance/:userId', leaveBalanceHandler);
 router.get('/leave-requests', getLeaveRequestsHandler);
+router.get('/my-leaves', getMyLeavesHandler);
 
 export default router;

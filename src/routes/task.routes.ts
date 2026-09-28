@@ -8,6 +8,9 @@ import {
   deleteTask,
   assignTask,
   addRevision,
+  submitTask,
+  approveTask,
+  rejectTask,
 } from '../controllers/task.controller'
 import { requireAuth } from '../middleware/auth.middleware'
 
@@ -21,4 +24,7 @@ router.patch('/:id', updateTask)
 router.delete('/:id', deleteTask)
 router.post('/:id/assignees', assignTask)
 router.post('/:id/revisions', addRevision)
+router.patch('/:id/submit', submitTask)
+router.patch('/:id/approve', approveTask)
+router.patch('/:id/reject', rejectTask)
 export default router

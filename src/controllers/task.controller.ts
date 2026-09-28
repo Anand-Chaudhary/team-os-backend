@@ -9,6 +9,9 @@ import {
   listUserTasks as serviceListUserTasks,
   assignTask as serviceAssignTask,
   addTaskRevision as serviceAddTaskRevision,
+  submitTask as serviceSubmitTask,
+  approveTask as serviceApproveTask,
+  rejectTask as serviceRejectTask,
 } from '../services/task.service'
 
 export async function listTasks(req: Request, res: Response, next: NextFunction) {
@@ -124,6 +127,40 @@ export async function addRevision(req: Request, res: Response, next: NextFunctio
     const submittedById = (req.user as any)?.id
     const revision = await serviceAddTaskRevision(id, { note, attachmentUrl, submittedById })
     return sendResponse(res, { success: true, message: 'Revision added', status: 201, data: revision })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function submitTask(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = req.params.id as string
+    const submittedById = (req.user as any)?.id
+    const task = await serviceSubmitTask(id, submittedById)
+    return sendResponse(res, { success: true, message: 'Task submitted for approval', status: 200, data: task })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function approveTask(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = req.params.id as string
+    const approvedById = (req.user as any)?.id
+    const task = await serviceApproveTask(id, approvedById)
+    return sendResponse(res, { success: true, message: 'Task approved', status: 200, data: task })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function rejectTask(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = req.params.id as string
+    const rejectedById = (req.user as any)?.id
+    const { reason } = req.body ?? {}
+    const task = await serviceRejectTask(id, rejectedById, reason)
+    return sendResponse(res, { success: true, message: 'Task rejected', status: 200, data: task })
   } catch (error) {
     next(error)
   }

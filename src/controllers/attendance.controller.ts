@@ -17,6 +17,7 @@ import {
   getTodayAttendance,
   punchOutForUser,
   getLeaveRequests,
+  getAllLeaveRequests,
 } from '../services/attendance.service';
 
 /** POST /attendance/punch – employee punch‑in */
@@ -255,8 +256,8 @@ export async function leaveBalanceHandler(req: Request, res: Response, next: Nex
 /** GET /attendance/leave-requests */
 export async function getLeaveRequestsHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const userId = (req.user as any)?.id;
-    if (!userId) {
+    const user = req.user as any;
+    if (!user?.id) {
       const err: any = new Error('Authentication required');
       err.status = 401;
       throw err;
@@ -270,8 +271,31 @@ export async function getLeaveRequestsHandler(req: Request, res: Response, next:
         status = cleaned;
       }
     }
-    const requests = await getLeaveRequests(userId, status);
+    
+    let requests;
+    if (user.role === 'SUPER_ADMIN' || user.role === 'LEADER' || user.role === 'MANAGER') {
+      requests = await getAllLeaveRequests(status);
+    } else {
+      requests = await getLeaveRequests(user.id, status);
+    }
+    
     return sendResponse(res, { success: true, message: 'Leave requests fetched', status: 200, data: requests });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/** GET /attendance/my-leaves */
+export async function getMyLeavesHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = req.user as any;
+    if (!user?.id) {
+      const err: any = new Error('Authentication required');
+      err.status = 401;
+      throw err;
+    }
+    const requests = await getLeaveRequests(user.id);
+    return sendResponse(res, { success: true, message: 'My leave requests fetched', status: 200, data: requests });
   } catch (error) {
     next(error);
   }

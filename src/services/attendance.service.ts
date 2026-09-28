@@ -281,23 +281,50 @@ export async function getLeaveBalance(userId: string) {
   return { total, used, remaining: Math.max(total - used, 0) };
 }
 
+/** Get all leave requests (for managers) */
+export async function getAllLeaveRequests(status?: string) {
+  const where: any = {};
+  if (status) {
+    where.status = status;
+  }
+  return prisma.leaveRequest.findMany({
+    where,
+    orderBy: { startDate: 'desc' },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+}
+
 /** Get leave requests for a user */
 export async function getLeaveRequests(userId: string, status?: string) {
-  // Verify user exists
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     const err: any = new Error('User not found');
     err.status = 404;
     throw err;
   }
-  // Build where clause
   const where: any = { userId };
   if (status) {
     where.status = status;
   }
-  // Return leave requests for the user, optionally filtered by status, most recent first
   return prisma.leaveRequest.findMany({
     where,
     orderBy: { startDate: 'desc' },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
   });
 }
