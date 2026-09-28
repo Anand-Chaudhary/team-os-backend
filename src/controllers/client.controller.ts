@@ -93,6 +93,7 @@ export async function updateClient(req: Request, res: Response, next: NextFuncti
       contactPhone,
       whatsappGroupUrl,
       monthlyGoal,
+      password,
     } = req.body ?? {};
 
     const updateData: any = {
@@ -102,6 +103,11 @@ export async function updateClient(req: Request, res: Response, next: NextFuncti
       ...(whatsappGroupUrl !== undefined && { whatsappGroupUrl: whatsappGroupUrl ?? null }),
       ...(monthlyGoal !== undefined && { monthlyGoal: monthlyGoal ?? null }),
     };
+
+    if (password) {
+      const bcrypt = await import('bcrypt');
+      updateData.passwordHash = await bcrypt.hash(password, 10);
+    }
 
     const client = await serviceUpdateClient(id, updateData);
 

@@ -3,7 +3,7 @@ import { prisma } from '../db/prisma';
 import { TaskStatus, TaskPriority } from '../generated/prisma/enums';
 
 export async function listTasks() {
-  return prisma.task.findMany({ include: { assignees: true, revisions: true, client: true } });
+  return prisma.task.findMany({ include: { assignees: { include: { user: true } }, revisions: true, client: true } });
 }
 
 export async function getTaskById(id: string) {
@@ -80,7 +80,7 @@ export async function deleteTask(id: string) {
 export async function listUserTasks(userId: string) {
   return prisma.task.findMany({
     where: { assignees: { some: { userId } } },
-    include: { assignees: true, revisions: true, client: true },
+    include: { assignees: { include: { user: true } }, revisions: true, client: true },
   });
 }
 
@@ -122,4 +122,80 @@ export async function addTaskRevision(
       submittedBy: { connect: { id: data.submittedById } },
     },
   });
+}
+
+export async function submitTask(id: string, submittedById: string) {
+  const task = await prisma.task.update({
+    where: { id },
+    data: { status: TaskStatus.SUBMITTED },
+    include: { createdBy: true, assignees: { include: { user: true } } },
+  });
+
+  const submittedBy = task.assignees.find(a => a.userId === submittedById)?.user || task.createdBy;
+  
+  // Notify super admins
+  const superAdmins = await prisma.user.findMany({
+    where: { role: 'SUPER_ADMIN' },
+  });
+  
+  await Promise.all(
+    superAdmins.map((admin) =>
+      createNotification({
+        userId: admin.id,
+        title: 'Task Pending Approval',
+        message: `${submittedBy.name} submitted task "${task.title}" for approval.`,
+        link: `/tasks/${task.id}`,
+      })
+    )
+  );
+
+  return task;
+}
+
+export async function approveTask(id: string, approvedById: string) {
+  const task = await prisma.task.update({
+    where: { id },
+    data: { status: TaskStatus.APPROVED },
+    include: { assignees: true },
+  });
+
+  // Notify assignees
+  await Promise.all(
+    task.assignees.map((a) =>
+      createNotification({
+        userId: a.userId,
+        title: 'Task Approved',
+        message: `Your task "${task.title}" was approved.`,
+        link: `/tasks/${task.id}`,
+      })
+    )
+  );
+
+  return task;
+}
+
+export async function rejectTask(id: string, rejectedById: string, reason?: string) {
+  const task = await prisma.task.update({
+    where: { id },
+    data: { status: TaskStatus.REVISION },
+    include: { assignees: true },
+  });
+
+  if (reason) {
+    await addTaskRevision(id, { note: `Task rejected: ${reason}`, submittedById: rejectedById });
+  }
+
+  // Notify assignees
+  await Promise.all(
+    task.assignees.map((a) =>
+      createNotification({
+        userId: a.userId,
+        title: 'Task Revision Requested',
+        message: `Your task "${task.title}" was rejected and needs revision. ${reason ? 'Reason: ' + reason : ''}`,
+        link: `/tasks/${task.id}`,
+      })
+    )
+  );
+
+  return task;
 }
