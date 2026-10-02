@@ -212,3 +212,42 @@ export async function logoutUser(token: string | undefined) {
 
   return true
 }
+
+/**
+ * Change the password for an authenticated user.
+ * Validates the current password, enforces a minimum length for the new password,
+ * and updates the stored password hash.
+ */
+export async function changePassword(userId: string, oldPassword: string, newPassword: string) {
+  // Fetch user
+  const user = await db.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    const err: any = new Error('User not found')
+    err.status = 404
+    throw err
+  }
+
+  // Verify current password
+  const matches = await verifyPassword(oldPassword, user.passwordHash)
+  if (!matches) {
+    const err: any = new Error('Current password is incorrect')
+    err.status = 401
+    throw err
+  }
+
+  // Validate new password
+  if (!newPassword || newPassword.length < 6) {
+    const err: any = new Error('New password must be at least 6 characters long')
+    err.status = 400
+    throw err
+  }
+
+  // Update password hash
+  const newHash = await hashPassword(newPassword)
+  await db.user.update({
+    where: { id: userId },
+    data: { passwordHash: newHash }
+  })
+
+  // No explicit response needed; controller will send a success message.
+}
