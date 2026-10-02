@@ -44,20 +44,42 @@ function generatePdf(data: {
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    // Header
-    doc.fontSize(20).text('Salary Slip', { align: 'center' }).moveDown(1);
-    doc.fontSize(12);
-    // Body
-    doc.text(`Employee Name: ${data.employeeName}`);
-    doc.text(`Designation: ${data.designation}`);
-    doc.text(`Salary Month: ${data.salaryMonth}`);
-    doc.text(`Monthly Salary: ₹${data.monthlySalary.toFixed(2)}`);
-    doc.text(`Attendance / Working Days: ${data.attendanceDays}`);
-    doc.text(`Paid Leaves: ${data.paidLeaves}`);
-    doc.text(`Unpaid Leaves: ${data.unpaidLeaves}`);
-    doc.text(`Unpaid Leave Deduction: ₹${data.unpaidLeaveDeduction.toFixed(2)}`);
-    doc.text(`Net Salary Payable: ₹${data.netSalary.toFixed(2)}`);
-    doc.text(`Salary Payment Date: ${data.salaryPaymentDate}`);
+    // Header - Company and Slip Title
+    doc.fontSize(24).font('Helvetica-Bold').text('Acme Corp', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(20).font('Helvetica-Bold').text('Salary Slip', { align: 'center' });
+    doc.moveDown(0.5);
+    const issueDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    doc.fontSize(12).font('Helvetica').text(`Issue Date: ${issueDate}`, { align: 'right' });
+    doc.moveDown(1);
+
+    // Table layout parameters
+    const startX = 50;
+    const labelWidth = 200;
+    const valueX = startX + labelWidth + 10;
+    let currentY = doc.y;
+    const rowHeight = 20;
+
+    const addRow = (label: string, value: string) => {
+      doc.font('Helvetica-Bold').fontSize(12).text(label, startX, currentY);
+      doc.font('Helvetica').fontSize(12).text(value, valueX, currentY);
+      currentY += rowHeight;
+    };
+
+    // Populate rows with data
+    addRow('Employee Name:', data.employeeName);
+    addRow('Designation:', data.designation);
+    addRow('Salary Month:', data.salaryMonth);
+    addRow('Monthly Salary:', `₹${data.monthlySalary.toFixed(2)}`);
+    addRow('Attendance / Working Days:', `${data.attendanceDays}`);
+    addRow('Paid Leaves:', `${data.paidLeaves}`);
+    addRow('Unpaid Leaves:', `${data.unpaidLeaves}`);
+    addRow('Unpaid Leave Deduction:', `₹${data.unpaidLeaveDeduction.toFixed(2)}`);
+    addRow('Net Salary Payable:', `₹${data.netSalary.toFixed(2)}`);
+    addRow('Salary Payment Date:', data.salaryPaymentDate);
+
+    // Draw a line under the table
+    doc.moveTo(startX, currentY).lineTo(startX + 500, currentY).stroke();
 
     doc.end();
     stream.on('finish', () => resolve(filePath));
