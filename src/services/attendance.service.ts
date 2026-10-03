@@ -205,17 +205,39 @@ export async function getMonthlyAttendance(userId: string, year: number, month: 
   });
 
   let totalWorkMs = 0;
+  let creditMs = 0;
   let lateCount = 0;
   let flaggedCount = 0;
+  
   for (const p of punches) {
     if (p.status === 'LATE') lateCount++;
     if (p.status === 'FLAGGED') flaggedCount++;
     if (p.checkOut) {
-      totalWorkMs += p.checkOut.getTime() - p.checkIn.getTime();
+      let br = 0;
+      for (const b of (p as any).lunchBreaks || []) {
+        if (b.endTime) br += b.endTime.getTime() - b.startTime.getTime();
+      }
+      
+      const ms = Math.max(0, p.checkOut.getTime() - p.checkIn.getTime() - br);
+      totalWorkMs += ms;
+      
+      const eightHoursMs = 8 * 60 * 60 * 1000;
+      if (ms > eightHoursMs) {
+        creditMs += (ms - eightHoursMs);
+      }
     }
   }
+  
   const totalHours = totalWorkMs / 1000 / 60 / 60;
-  return { totalHours, lateCount, flaggedCount, punchCount: punches.length };
+  const creditHours = creditMs / 1000 / 60 / 60;
+  
+  return { 
+    totalHours: Math.round(totalHours * 100) / 100,
+    creditHours: Math.round(creditHours * 100) / 100,
+    lateCount, 
+    flaggedCount, 
+    punchCount: punches.length 
+  };
 }
 
 /** Create a leave request for a user. */
