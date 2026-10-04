@@ -75,7 +75,7 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
 
 export async function getMe(req: Request, res: Response, next: NextFunction) {
   try {
-    const user = req.user
+    const user = req.user ?? (req as any).client
 
     return sendResponse(res, {
       success: true,

@@ -25,8 +25,9 @@ export async function createClient(data: {
   whatsappGroupUrl?: string | null;
   monthlyGoal?: number | null;
   password?: string;
+  deliverables?: any;
 }) {
-  const { name, contactEmail, contactPhone, whatsappGroupUrl, monthlyGoal, password } = data;
+  const { name, contactEmail, contactPhone, whatsappGroupUrl, monthlyGoal, password, deliverables } = data;
   let passwordHash: string | undefined;
   if (password) {
     const bcrypt = await import('bcrypt');
@@ -41,6 +42,7 @@ export async function createClient(data: {
 //      contentTags: contentTags ?? [],
       monthlyGoal: monthlyGoal ?? null,
       passwordHash,
+      deliverables: deliverables ?? [],
     },
   });
 }

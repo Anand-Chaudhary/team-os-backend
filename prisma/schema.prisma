@@ -292,6 +292,7 @@ model Client {
   whatsappGroupUrl String?
   passwordHash    String?   // bcrypt hash for client login
   monthlyGoal      Int?      // target posts/month
+  deliverables     Json?     @default("[]")
 
   poc              User?     @relation("ClientPOC", fields: [pocId], references: [id])
   pocId            String?   @unique

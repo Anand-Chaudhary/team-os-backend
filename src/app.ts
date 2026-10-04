@@ -16,8 +16,13 @@ app.use(morgan('dev'))
 
 app.use(cors({
     origin: (origin, callback) => {
-        const allowedOrigins = [process.env.DEVELOPMENT_URL, process.env.PRODUCTION_URL];
-        if (!origin || allowedOrigins.includes(origin)) {
+        const allowedOrigins = [
+            process.env.DEVELOPMENT_URL,
+            process.env.PRODUCTION_URL,
+            'http://localhost:5173',
+            'http://localhost:5174',
+        ].filter(Boolean);
+        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
             callback(null, true);
         } else {
             callback(new Error("Not allowed by CORS"));
@@ -29,7 +34,6 @@ app.use(cors({
 
 // Serve generated PDF salary slips (iframe‑friendly)
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-
 
 app.use((_, res, next) => {
   res.success = (payload: ApiResponse<unknown>) => {
@@ -43,6 +47,8 @@ app.use((_, res, next) => {
   next()
 })
 
+app.use('/api/v1', apiRoutes)
+
 app.use((err: any, _req: any, res: any, _next: any) => {
   const status = err?.status ?? 500
   const message = err?.message ?? 'Internal Server Error'
@@ -54,7 +60,5 @@ app.use((err: any, _req: any, res: any, _next: any) => {
     data: null
   })
 })
-
-app.use('/api/v1', apiRoutes)
 
 export default app
