@@ -18,6 +18,16 @@ export async function getClientById(id: string) {
  * Create a new client.
  * Expected data: { name, contactEmail?, contactPhone?, whatsappGroupUrl?, contentTags?, monthlyGoal? }
  */
+function normalizeDeliverables(items: any) {
+  if (!Array.isArray(items)) return items;
+  return items.map((item, idx) => ({
+    ...item,
+    id: item.id || `deliv_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
+    number: Number(item.number || item.count || 1),
+    type: item.type || item.title || 'Deliverable',
+  }));
+}
+
 export async function createClient(data: {
   name: string;
   contactEmail?: string | null;
@@ -42,7 +52,7 @@ export async function createClient(data: {
 //      contentTags: contentTags ?? [],
       monthlyGoal: monthlyGoal ?? null,
       passwordHash,
-      deliverables: deliverables ?? [],
+      deliverables: normalizeDeliverables(deliverables ?? []),
     },
   });
 }
@@ -51,6 +61,9 @@ export async function createClient(data: {
  * Update an existing client. `updateData` should contain only fields to be updated.
  */
 export async function updateClient(id: string, updateData: any) {
+  if (updateData.deliverables !== undefined) {
+    updateData.deliverables = normalizeDeliverables(updateData.deliverables);
+  }
   return prisma.client.update({
     where: { id },
     data: updateData,

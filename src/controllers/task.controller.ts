@@ -56,14 +56,23 @@ export async function getTask(req: Request, res: Response, next: NextFunction) {
 
 export async function createTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const { title, description, clientId, deadline, priority } = req.body ?? {}
+    const { title, description, clientId, deadline, priority, deliverableId, deliverablesId, deliverableIds } = req.body ?? {}
     if (!title) {
       const err: any = new Error('Title required')
       err.status = 400
       throw err
     }
+    const finalDeliverableId = deliverableId || deliverablesId || (Array.isArray(deliverableIds) ? deliverableIds[0] : undefined)
     const createdById = (req.user as any)?.id
-    const task = await serviceCreateTask({ title, description, clientId, deadline, priority, createdById })
+    const task = await serviceCreateTask({
+      title,
+      description,
+      clientId,
+      deadline,
+      priority,
+      createdById,
+      deliverableId: finalDeliverableId,
+    })
     return sendResponse(res, { success: true, message: 'Task created', status: 201, data: task })
   } catch (error) {
     next(error)
@@ -101,14 +110,20 @@ export async function deleteTask(req: Request, res: Response, next: NextFunction
 
 export async function assignTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const id = req.params.id as string
-    const { assigneeIds } = req.body ?? {}
+    const id = (req.params.id || req.body?.taskId || req.body?.id) as string
+    const { assigneeIds, deliverableId, deliverablesId, deliverableIds } = req.body ?? {}
+    if (!id) {
+      const err: any = new Error('Task ID required')
+      err.status = 400
+      throw err
+    }
     if (!Array.isArray(assigneeIds) || assigneeIds.length === 0) {
       const err: any = new Error('assigneeIds array required')
       err.status = 400
       throw err
     }
-    const result = await serviceAssignTask(id, assigneeIds)
+    const finalDeliverableId = deliverableId || deliverablesId || (Array.isArray(deliverableIds) ? deliverableIds[0] : undefined)
+    const result = await serviceAssignTask(id, assigneeIds, finalDeliverableId)
     return sendResponse(res, { success: true, message: 'Assignees added', status: 200, data: result })
   } catch (error) {
     next(error)

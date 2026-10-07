@@ -14,6 +14,7 @@ import clientReviewRoutes from './clientReview.routes'
 import financeRoutes from './finance.routes'
 import salarySlipRoutes from './salarySlip.routes'
 import contentCalendarRoutes from './contentCalendar.routes'
+import deliverableRoutes from './deliverable.routes'
 
 const router = Router()
 
@@ -22,6 +23,7 @@ router.use('/auth', authRoutes)
 router.use('/team', teamRoutes)
 router.use(publicCalendarRoutes)
 router.use('/clients', clientRoutes)
+router.use('/deliverables', deliverableRoutes)
 router.use('/attendance', attendanceRoutes)
 router.use('/tasks', taskRoutes)
 router.use('/shoots', shootRoutes)

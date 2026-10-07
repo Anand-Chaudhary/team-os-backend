@@ -32,6 +32,9 @@ function normalizePriority(p?: string | TaskPriority): TaskPriority | undefined 
   return p;
 }
 
+// Attempt to ensure deliverableId column exists safely
+prisma.$executeRawUnsafe(`ALTER TABLE "Task" ADD COLUMN IF NOT EXISTS "deliverableId" TEXT;`).catch(() => {});
+
 export async function createTask(data: {
   title: string;
   description?: string | null;
@@ -39,19 +42,44 @@ export async function createTask(data: {
   deadline?: string | Date | null;
   priority?: string | TaskPriority;
   createdById: string;
+  deliverableId?: string | null;
 }) {
-  const { title, description, clientId, deadline, priority, createdById } = data;
+  const { title, description, clientId, deadline, priority, createdById, deliverableId } = data;
   const normalizedPriority = normalizePriority(priority);
-  return prisma.task.create({
-    data: {
-      title,
-      description: description ?? null,
-      client: clientId ? { connect: { id: clientId } } : undefined,
-      deadline: deadline ? new Date(deadline) : undefined,
-      priority: normalizedPriority ?? TaskPriority.MEDIUM,
-      createdBy: { connect: { id: createdById } },
-    },
-  });
+
+  try {
+    return await (prisma.task as any).create({
+      data: {
+        title,
+        description: description ?? null,
+        client: clientId ? { connect: { id: clientId } } : undefined,
+        deadline: deadline ? new Date(deadline) : undefined,
+        priority: normalizedPriority ?? TaskPriority.MEDIUM,
+        createdBy: { connect: { id: createdById } },
+        ...(deliverableId ? { deliverableId } : {}),
+      },
+      include: { assignees: { include: { user: true } }, client: true },
+    });
+  } catch {
+    // If deliverableId column not present, fallback with tag in description
+    const desc = deliverableId
+      ? description
+        ? `${description}\n[deliverableId:${deliverableId}]`
+        : `[deliverableId:${deliverableId}]`
+      : description;
+
+    return prisma.task.create({
+      data: {
+        title,
+        description: desc ?? null,
+        client: clientId ? { connect: { id: clientId } } : undefined,
+        deadline: deadline ? new Date(deadline) : undefined,
+        priority: normalizedPriority ?? TaskPriority.MEDIUM,
+        createdBy: { connect: { id: createdById } },
+      },
+      include: { assignees: { include: { user: true } }, client: true },
+    });
+  }
 }
 
 export async function updateTask(id: string, updateData: any) {
@@ -84,9 +112,35 @@ export async function listUserTasks(userId: string) {
   });
 }
 
-export async function assignTask(taskId: string, assigneeIds: string[]) {
+export async function assignTask(taskId: string, assigneeIds: string[], deliverableId?: string | null) {
   const creates = assigneeIds.map((userId) => ({ taskId, userId }));
   await prisma.taskAssignee.createMany({ data: creates, skipDuplicates: true });
+
+  if (deliverableId) {
+    try {
+      await (prisma.task as any).update({
+        where: { id: taskId },
+        data: { deliverableId },
+      });
+    } catch {
+      try {
+        const task = await prisma.task.findUnique({ where: { id: taskId } });
+        if (task) {
+          const desc = task.description || '';
+          const tag = `[deliverableId:${deliverableId}]`;
+          if (!desc.includes(tag)) {
+            await prisma.task.update({
+              where: { id: taskId },
+              data: { description: desc ? `${desc}\n${tag}` : tag },
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Could not store deliverableId in task description:', e);
+      }
+    }
+  }
+
   // Notify each assignee about the new task assignment
   await Promise.all(
     assigneeIds.map((uid) =>
@@ -100,7 +154,7 @@ export async function assignTask(taskId: string, assigneeIds: string[]) {
   );
   return prisma.task.findUnique({
     where: { id: taskId },
-    include: { assignees: { include: { user: true } } },
+    include: { assignees: { include: { user: true } }, client: true },
   });
 }
 

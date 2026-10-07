@@ -47,7 +47,10 @@ app.use((_, res, next) => {
   next()
 })
 
+import deliverableRoutes from './routes/deliverable.routes'
+
 app.use('/api/v1', apiRoutes)
+app.use('/deliverables', deliverableRoutes)
 
 app.use((err: any, _req: any, res: any, _next: any) => {
   const status = err?.status ?? 500
